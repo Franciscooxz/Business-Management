@@ -198,4 +198,4 @@ npm run lint             # Linter
 
 ## Licencia
 
-Este repositorio no define una licencia propia a nivel raíz. Revisa políticas internas de tu equipo antes de distribuirlo públicamente.
+Libre uso.
