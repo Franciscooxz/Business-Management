@@ -1,51 +1,66 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './store/authStore';
 
-// Auth
+// Auth (no lazy — siempre necesario)
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 
-// Pages
+// Core pages (eager — se usan siempre al entrar)
 import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import Categories from './pages/Categories';
-import Users from './pages/Users';
-import POS from './pages/POS';
-import Sales from './pages/Sales';
-import Customers from './pages/Customers';
-import CurrenciesPage from './pages/Currencies';
-import PurchaseOrdersPage from './pages/PurchaseOrders';
-import SuppliersPage from './pages/Suppliers';
-import ReportsPage from './pages/Reports';
-import NotFound from './pages/NotFound';
 
-// Protected Route Component
-function ProtectedRoute({ children }) {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  return isAuthenticated ? children : <Navigate to="/login" />;
+// Módulo: Inventario/Productos
+const Products = lazy(() => import('./pages/Products'));
+const Categories = lazy(() => import('./pages/Categories'));
+
+// Módulo: Comercial
+const POS = lazy(() => import('./pages/POS'));
+const Sales = lazy(() => import('./pages/Sales'));
+const Customers = lazy(() => import('./pages/Customers'));
+
+// Módulo: Administración
+const Users = lazy(() => import('./pages/Users'));
+const CurrenciesPage = lazy(() => import('./pages/Currencies'));
+const SuppliersPage = lazy(() => import('./pages/Suppliers'));
+const PurchaseOrdersPage = lazy(() => import('./pages/PurchaseOrders'));
+const ReportsPage = lazy(() => import('./pages/Reports'));
+
+// Módulo: Terceros
+const ThirdParties = lazy(() => import('./pages/third-parties/ThirdParties'));
+
+// Módulo: Contabilidad
+const PucAccounts = lazy(() => import('./pages/accounting/PucAccounts'));
+const Vouchers = lazy(() => import('./pages/accounting/Vouchers'));
+
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Spinner de carga entre módulos
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="w-8 h-8 border-2 border-primary-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
 }
 
-// Admin Only Route
+function ProtectedRoute({ children }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+}
+
 function AdminRoute({ children }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isAdmin = useAuthStore((state) => state.isAdmin);
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-  
-  if (!isAdmin()) {
-    return <Navigate to="/dashboard" />;
-  }
-  
+  const user = useAuthStore((state) => state.user);
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'admin' && user?.role !== 'super_admin') return <Navigate to="/dashboard" replace />;
   return children;
 }
 
 function App() {
   return (
     <Router>
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           duration: 3000,
@@ -57,101 +72,47 @@ function App() {
             borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
           },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
+          success: { iconTheme: { primary: '#10b981', secondary: '#fff' } },
+          error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
         }}
       />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* Protected Routes */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/pos" element={
-          <ProtectedRoute>
-            <POS />
-          </ProtectedRoute>
-        } />
+          {/* Dashboard */}
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
 
-        <Route path="/sales" element={
-          <ProtectedRoute>
-            <Sales />
-          </ProtectedRoute>
-        } />
+          {/* Comercial */}
+          <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
+          <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
 
-        <Route path="/customers" element={
-          <ProtectedRoute>
-            <Customers />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/products" element={
-          <ProtectedRoute>
-            <Products />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/categories" element={
-          <ProtectedRoute>
-            <Categories />
-          </ProtectedRoute>
-        } />
+          {/* Terceros */}
+          <Route path="/third-parties" element={<ProtectedRoute><ThirdParties /></ProtectedRoute>} />
 
-        {/* Admin Only Routes */}
-        <Route path="/users" element={
-          <AdminRoute>
-            <Users />
-          </AdminRoute>
-        } />
+          {/* Contabilidad */}
+          <Route path="/accounting/puc" element={<ProtectedRoute><PucAccounts /></ProtectedRoute>} />
+          <Route path="/accounting/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
 
-        {/* Currents */}
-        <Route path="/currencies" element={
-          <AdminRoute>
-            <CurrenciesPage />
-          </AdminRoute>
-        } />
+          {/* Inventario */}
+          <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+          <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
 
-        {/* Suppliers & Purchase Orders */}
-        <Route path="/suppliers" element={
-          <ProtectedRoute>
-            <SuppliersPage />
-          </ProtectedRoute>
-        } />
+          {/* Administración */}
+          <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />
+          <Route path="/currencies" element={<AdminRoute><CurrenciesPage /></AdminRoute>} />
+          <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
+          <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrdersPage /></ProtectedRoute>} />
+          <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
 
-        <Route path="/purchase-orders" element={
-          <ProtectedRoute>
-            <PurchaseOrdersPage />
-          </ProtectedRoute>
-        } />
-
-        <Route path="/reports" element={
-          <ProtectedRoute>
-            <ReportsPage />
-          </ProtectedRoute>
-        } />
-
-        {/* Redirect */}
-        <Route path="/" element={<Navigate to="/dashboard" />} />
-        <Route path="*" element={<Navigate to="/dashboard" />} />
-
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+          {/* Redirects */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </Router>
   );
 }
