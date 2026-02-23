@@ -150,6 +150,15 @@ class PermissionSeeder extends Seeder
             'purchases.view',
             'sales.view',
         ],
+        // Rol por defecto para nuevos registros (acceso básico de lectura)
+        'user' => [
+            'invoices.view',
+            'inventory.view',
+            'reports.view',
+            'sales.view',
+            'purchases.view',
+            'third_parties.view',
+        ],
     ];
 
     public function run(): void

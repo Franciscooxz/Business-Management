@@ -16,22 +16,26 @@ class AuthController extends Controller
 {
     public function register(RegisterRequest $request): JsonResponse
     {
-        $userRole = Role::where('name', 'user')->first();
+        // Busca el rol 'user' en la tabla de Spatie (name + guard_name)
+        $userRole = Role::where('name', 'user')->where('guard_name', 'web')->first();
 
         if (!$userRole) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Default role not found. Please run seeders.',
-            ], 500);
+            // Fallback: usa 'viewer' si 'user' no existe
+            $userRole = Role::where('guard_name', 'web')->first();
         }
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => $request->password,
-            'role_id'  => $userRole->id,
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => $request->password,
+            'role_id'   => $userRole?->id,
             'is_active' => true,
         ]);
+
+        // Asignar rol también vía Spatie (para permisos)
+        if ($userRole) {
+            $user->assignRole($userRole->name);
+        }
 
         $user->load('role', 'company');
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -109,14 +113,14 @@ class AuthController extends Controller
             'is_active'   => $user->is_active,
             'company_id'  => $user->company_id,
             'company'     => $user->company ? [
-                'id'             => $user->company->id,
-                'name'           => $user->company->name,
-                'nit'            => $user->company->nit,
-                'nit_dv'         => $user->company->nit_dv,
-                'razon_social'   => $user->company->razon_social,
+                'id'               => $user->company->id,
+                'name'             => $user->company->name,
+                'nit'              => $user->company->nit,
+                'nit_dv'           => $user->company->nit_dv,
+                'razon_social'     => $user->company->razon_social,
                 'nombre_comercial' => $user->company->nombre_comercial,
-                'dian_ambiente'  => $user->company->dian_ambiente,
-                'logo_path'      => $user->company->logo_path,
+                'dian_ambiente'    => $user->company->dian_ambiente,
+                'logo_path'        => $user->company->logo_path,
             ] : null,
             'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
             'roles'       => $user->getRoleNames()->toArray(),

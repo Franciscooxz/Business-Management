@@ -2,21 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Spatie\Permission\Models\Role as SpatieRole;
 
-class Role extends Model
+/**
+ * App\Models\Role
+ *
+ * Extiende el modelo de Spatie para mantener compatibilidad
+ * con el código legado que usa App\Models\Role directamente.
+ * La tabla 'roles' y la relación users() las gestiona Spatie.
+ */
+class Role extends SpatieRole
 {
-    use HasFactory;
-
-    protected $fillable = [
-        'name',
-        'description',
-    ];
-
-    // Relación: Un rol tiene muchos usuarios
-    public function users()
-    {
-        return $this->hasMany(User::class);
-    }
+    // Hereda todo de Spatie incluyendo users() como BelongsToMany.
+    // No redefinimos users() para evitar conflicto de firma.
 }

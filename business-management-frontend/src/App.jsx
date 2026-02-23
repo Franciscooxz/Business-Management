@@ -30,6 +30,11 @@ const ReportsPage = lazy(() => import('./pages/Reports'));
 // Módulo: Terceros
 const ThirdParties = lazy(() => import('./pages/third-parties/ThirdParties'));
 
+// Módulo: Facturación Electrónica DIAN
+const ElectronicInvoices = lazy(() => import('./pages/electronic-invoice/ElectronicInvoices'));
+const InvoiceCreate      = lazy(() => import('./pages/electronic-invoice/InvoiceCreate'));
+const InvoiceDetail      = lazy(() => import('./pages/electronic-invoice/InvoiceDetail'));
+
 // Módulo: Contabilidad
 const PucAccounts    = lazy(() => import('./pages/accounting/PucAccounts'));
 const Vouchers       = lazy(() => import('./pages/accounting/Vouchers'));
@@ -113,6 +118,11 @@ function App() {
           <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
           <Route path="/purchase-orders" element={<ProtectedRoute><PurchaseOrdersPage /></ProtectedRoute>} />
           <Route path="/reports" element={<ProtectedRoute><ReportsPage /></ProtectedRoute>} />
+
+          {/* Facturación Electrónica DIAN */}
+          <Route path="/electronic-invoice" element={<ProtectedRoute><ElectronicInvoices /></ProtectedRoute>} />
+          <Route path="/electronic-invoice/create" element={<ProtectedRoute><InvoiceCreate /></ProtectedRoute>} />
+          <Route path="/electronic-invoice/:id" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
 
           {/* Redirects */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

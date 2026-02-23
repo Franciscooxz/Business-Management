@@ -1,23 +1,20 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 
+/**
+ * Esta migración fue reemplazada por Spatie Permission (create_permission_tables).
+ * Se mantiene vacía para preservar el orden del historial de migraciones.
+ */
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('roles', function (Blueprint $table) {
-            $table->id();
-            $table->string('name', 50)->unique();
-            $table->string('description', 255)->nullable();
-            $table->timestamps();
-        });
+        // No-op: Spatie Permission crea la tabla 'roles' en create_permission_tables
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('roles');
+        // No-op
     }
-};  
+};

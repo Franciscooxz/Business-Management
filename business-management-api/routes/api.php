@@ -17,6 +17,8 @@ use App\Http\Controllers\Api\ThirdParty\ThirdPartyController;
 use App\Http\Controllers\Api\Accounting\PucAccountController;
 use App\Http\Controllers\Api\Accounting\VoucherController;
 use App\Http\Controllers\Api\Inventory\KardexController;
+use App\Http\Controllers\Api\ElectronicInvoice\ElectronicInvoiceController;
+use App\Http\Controllers\Api\ElectronicInvoice\DianResolutionController;
 
 // Rutas públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -134,5 +136,33 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
 
         // Alertas de stock
         Route::get('stock-alerts', [KardexController::class, 'stockAlerts']);
+    });
+
+    // =========================================================================
+    // ERP: FACTURACIÓN ELECTRÓNICA DIAN
+    // =========================================================================
+    Route::prefix('electronic-invoices')->group(function () {
+        // Estadísticas (antes del apiResource para evitar conflicto con {id})
+        Route::get('stats', [ElectronicInvoiceController::class, 'stats']);
+
+        // Acciones sobre una factura
+        Route::post('{electronicInvoice}/generate-xml',  [ElectronicInvoiceController::class, 'generateXml']);
+        Route::post('{electronicInvoice}/send',          [ElectronicInvoiceController::class, 'send']);
+        Route::post('{electronicInvoice}/check-status',  [ElectronicInvoiceController::class, 'checkStatus']);
+        Route::post('{electronicInvoice}/cancel',        [ElectronicInvoiceController::class, 'cancel']);
+        Route::get('{electronicInvoice}/download-xml',   [ElectronicInvoiceController::class, 'downloadXml']);
+
+        // CRUD base
+        Route::apiResource('/', ElectronicInvoiceController::class)
+            ->parameters(['' => 'electronicInvoice'])
+            ->except(['update']);
+        Route::put('{electronicInvoice}', [ElectronicInvoiceController::class, 'update']);
+    });
+
+    // ── Resoluciones DIAN ────────────────────────────────────────────────────
+    Route::prefix('dian/resolutions')->group(function () {
+        Route::post('{resolution}/activate', [DianResolutionController::class, 'activate']);
+        Route::apiResource('/', DianResolutionController::class)
+            ->parameters(['' => 'resolution']);
     });
 });
