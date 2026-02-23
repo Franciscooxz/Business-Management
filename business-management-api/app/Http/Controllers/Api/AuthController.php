@@ -10,16 +10,12 @@ use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Http\JsonResponse;
 
 class AuthController extends Controller
 {
-    /**
-     * REGISTRO DE USUARIO
-     */
-    public function register(RegisterRequest $request) // 👈 CAMBIO AQUÍ
+    public function register(RegisterRequest $request): JsonResponse
     {
-        // Las validaciones ya se hicieron automáticamente
-        
         $userRole = Role::where('name', 'user')->first();
 
         if (!$userRole) {
@@ -30,100 +26,100 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => $request->password,
-            'role_id' => $userRole->id,
+            'role_id'  => $userRole->id,
             'is_active' => true,
         ]);
 
-        $user->load('role');
+        $user->load('role', 'company');
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'User registered successfully',
+            'message' => 'Usuario registrado exitosamente.',
             'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role->name,
-                    'is_active' => $user->is_active,
-                ],
+                'user'         => $this->formatUser($user),
                 'access_token' => $token,
-                'token_type' => 'Bearer',
+                'token_type'   => 'Bearer',
             ],
         ], 201);
     }
 
-    /**
-     * LOGIN DE USUARIO
-     */
-    public function login(LoginRequest $request) // 👈 CAMBIO AQUÍ
+    public function login(LoginRequest $request): JsonResponse
     {
-        // Las validaciones ya se hicieron automáticamente
-        
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'email' => ['Las credenciales proporcionadas son incorrectas.'],
             ]);
         }
 
         if (!$user->is_active) {
             return response()->json([
                 'success' => false,
-                'message' => 'Your account has been deactivated.',
+                'message' => 'Su cuenta ha sido desactivada.',
             ], 403);
         }
 
-        $user->load('role');
+        $user->load('role', 'company');
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'Login successful',
+            'message' => 'Inicio de sesion exitoso.',
             'data' => [
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role->name,
-                    'is_active' => $user->is_active,
-                ],
+                'user'         => $this->formatUser($user),
                 'access_token' => $token,
-                'token_type' => 'Bearer',
+                'token_type'   => 'Bearer',
             ],
         ], 200);
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Logged out successfully',
+            'message' => 'Sesion cerrada exitosamente.',
         ], 200);
     }
 
-    public function me(Request $request)
+    public function me(Request $request): JsonResponse
     {
         $user = $request->user();
-        $user->load('role');
+        $user->load('role', 'company');
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role->name,
-                'is_active' => $user->is_active,
-                'created_at' => $user->created_at,
-            ],
+            'data'    => $this->formatUser($user),
         ], 200);
+    }
+
+    private function formatUser(User $user): array
+    {
+        return [
+            'id'          => $user->id,
+            'name'        => $user->name,
+            'email'       => $user->email,
+            'role'        => $user->role?->name,
+            'is_active'   => $user->is_active,
+            'company_id'  => $user->company_id,
+            'company'     => $user->company ? [
+                'id'             => $user->company->id,
+                'name'           => $user->company->name,
+                'nit'            => $user->company->nit,
+                'nit_dv'         => $user->company->nit_dv,
+                'razon_social'   => $user->company->razon_social,
+                'nombre_comercial' => $user->company->nombre_comercial,
+                'dian_ambiente'  => $user->company->dian_ambiente,
+                'logo_path'      => $user->company->logo_path,
+            ] : null,
+            'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+            'roles'       => $user->getRoleNames()->toArray(),
+        ];
     }
 }

@@ -15,122 +15,94 @@ const useAuthStore = create(
     (set, get) => ({
       user: null,
       token: null,
+      company: null,
+      permissions: [],
       isAuthenticated: false,
 
-      // Función LOGIN
       login: async (email, password) => {
-        try {
-          console.log('📤 Enviando login request'); // Debug
-          
-          const response = await api.post('/login', {
-            email,
-            password,
-          });
+        const response = await api.post('/login', { email, password });
 
-          console.log('📥 Respuesta del servidor:', response.data); // Debug
+        const { user, access_token: token } = response.data.data;
+        const company = user.company ?? null;
+        const permissions = user.permissions ?? [];
 
-          // Extraer datos de la respuesta (según tu AuthController)
-          const user = response.data.data.user;
-          const token = response.data.data.access_token;
-
-          // Guardar en localStorage
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
-
-          // Configurar token para futuras peticiones
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-          // Actualizar estado de Zustand
-          set({
-            user,
-            token,
-            isAuthenticated: true,
-          });
-
-          return { user, token };
-        } catch (error) {
-          console.error('❌ Error en login:', error.response?.data || error);
-          throw error;
-        }
-      },
-
-      // Función REGISTER
-      register: async (name, email, password) => {
-        try {
-          console.log('📤 Enviando register request'); // Debug
-          
-          const response = await api.post('/register', {
-            name,
-            email,
-            password,
-            password_confirmation: password,
-          });
-
-          console.log('📥 Respuesta del servidor:', response.data); // Debug
-
-          // Extraer datos de la respuesta
-          const user = response.data.data.user;
-          const token = response.data.data.access_token;
-
-          // Guardar en localStorage
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
-
-          // Configurar token para futuras peticiones
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-          // Actualizar estado
-          set({
-            user,
-            token,
-            isAuthenticated: true,
-          });
-
-          return { user, token };
-        } catch (error) {
-          console.error('❌ Error en register:', error.response?.data || error);
-          throw error;
-        }
-      },
-
-      // Función setAuth (mantener por compatibilidad)
-      setAuth: (user, token) => {
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        set({ user, token, isAuthenticated: true });
+
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        set({ user, token, company, permissions, isAuthenticated: true });
+
+        return { user, token };
       },
 
-      // Función LOGOUT
+      register: async (name, email, password) => {
+        const response = await api.post('/register', {
+          name,
+          email,
+          password,
+          password_confirmation: password,
+        });
+
+        const { user, access_token: token } = response.data.data;
+        const company = user.company ?? null;
+        const permissions = user.permissions ?? [];
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        set({ user, token, company, permissions, isAuthenticated: true });
+
+        return { user, token };
+      },
+
+      setAuth: (user, token) => {
+        const company = user.company ?? null;
+        const permissions = user.permissions ?? [];
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        set({ user, token, company, permissions, isAuthenticated: true });
+      },
+
       logout: () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         delete api.defaults.headers.common['Authorization'];
-        set({ user: null, token: null, isAuthenticated: false });
+        set({ user: null, token: null, company: null, permissions: [], isAuthenticated: false });
       },
 
-      // Función para verificar si es admin
       isAdmin: () => {
-        const state = get();
-        return state.user?.role === 'admin';
+        const { user } = get();
+        return user?.role === 'admin' || user?.roles?.includes('admin') || user?.roles?.includes('super_admin');
       },
 
-      // Función para verificar autenticación (útil para rutas protegidas)
+      hasPermission: (permission) => {
+        const { permissions, user } = get();
+        if (!user) return false;
+        if (user.role === 'admin' || user.roles?.includes('super_admin')) return true;
+        return permissions.includes(permission);
+      },
+
+      hasAnyPermission: (permissionList) => {
+        const { hasPermission } = get();
+        return permissionList.some((p) => hasPermission(p));
+      },
+
       checkAuth: () => {
         const token = localStorage.getItem('token');
         const userStr = localStorage.getItem('user');
-        
+
         if (token && userStr) {
           try {
             const user = JSON.parse(userStr);
+            const company = user.company ?? null;
+            const permissions = user.permissions ?? [];
             api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-            set({
-              user,
-              token,
-              isAuthenticated: true,
-            });
+            set({ user, token, company, permissions, isAuthenticated: true });
             return true;
-          } catch (error) {
-            console.error('Error parsing user:', error);
+          } catch {
             return false;
           }
         }

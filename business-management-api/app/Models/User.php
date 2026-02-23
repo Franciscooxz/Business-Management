@@ -6,17 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\SoftDeletes; 
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
+    use HasFactory, Notifiable, HasApiTokens, SoftDeletes, HasRoles;
 
     protected $fillable = [
         'name',
         'email',
         'password',
         'role_id',
+        'company_id',
         'is_active',
     ];
 
@@ -37,6 +39,11 @@ class User extends Authenticatable
     public function role()
     {
         return $this->belongsTo(Role::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function products()

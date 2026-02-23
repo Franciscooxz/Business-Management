@@ -8,13 +8,26 @@ const api = axios.create({
   },
 });
 
-// Request interceptor - Agregar token
+// Request interceptor - Agregar token y company_id
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        if (parsed.company_id) {
+          config.headers['X-Company-Id'] = parsed.company_id;
+        }
+      } catch {
+        // invalid JSON, ignore
+      }
+    }
+
     return config;
   },
   (error) => {

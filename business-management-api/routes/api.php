@@ -12,6 +12,10 @@ use App\Http\Controllers\Api\SaleController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\SupplierController;
 use App\Http\Controllers\Api\PurchaseOrderController;
+// ERP Modules
+use App\Http\Controllers\Api\ThirdParty\ThirdPartyController;
+use App\Http\Controllers\Api\Accounting\PucAccountController;
+use App\Http\Controllers\Api\Accounting\VoucherController;
 
 // Rutas públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -88,10 +92,30 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     // MOVIMIENTOS DE STOCK
     Route::get('products/{id}/stock-movements', [StockMovementController::class, 'getProductMovements']);
     Route::post('products/{id}/stock-movements', [StockMovementController::class, 'createMovement']);
-    
+
     // Movimientos de stock - Admin
     Route::middleware('role:admin')->group(function () {
         Route::get('stock-movements', [StockMovementController::class, 'index']);
         Route::get('stock-movements/export', [StockMovementController::class, 'export']);
+    });
+
+    // =========================================================================
+    // ERP: TERCEROS
+    // =========================================================================
+    Route::get('third-parties/search', [ThirdPartyController::class, 'search']);
+    Route::apiResource('third-parties', ThirdPartyController::class);
+
+    // =========================================================================
+    // ERP: CONTABILIDAD
+    // =========================================================================
+    Route::prefix('accounting')->group(function () {
+        // Plan Unico de Cuentas
+        Route::get('puc/tree', [PucAccountController::class, 'tree']);
+        Route::apiResource('puc', PucAccountController::class)->except(['destroy']);
+
+        // Comprobantes
+        Route::post('vouchers/{voucher}/post', [VoucherController::class, 'post']);
+        Route::post('vouchers/{voucher}/reverse', [VoucherController::class, 'reverse']);
+        Route::apiResource('vouchers', VoucherController::class)->except(['update', 'destroy']);
     });
 });
