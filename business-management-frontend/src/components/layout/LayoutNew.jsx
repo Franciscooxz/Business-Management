@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  FolderTree, 
-  Users, 
-  LogOut, 
-  X, 
+import {
+  LayoutDashboard,
+  Package,
+  FolderTree,
+  Users,
+  LogOut,
+  X,
   Menu,
   ShoppingCart,
   Receipt,
@@ -14,225 +14,307 @@ import {
   DollarSign,
   Truck,
   ShoppingBag,
-  FileText
+  FileText,
+  BookOpen,
+  ClipboardList,
+  CalendarDays,
+  Layers,
+  CreditCard,
+  Banknote,
+  ArrowLeftRight,
+  TrendingUp,
+  Users2,
+  Building2,
+  ChevronDown,
+  ChevronRight,
+  Scale,
+  BarChart3,
+  PieChart,
+  BookMarked,
+  Wallet,
+  FileClock,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
+import { usePermission } from '../../hooks/usePermission';
 import ThemeToggle from '../ThemeToggle';
 import NotificationBell from '../NotificationBell';
 
-export default function LayoutNew({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout, isAdmin } = useAuthStore();
+const navigationGroups = [
+  {
+    label: null,
+    items: [
+      { name: 'Panel Principal', to: '/dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
+    label: 'Comercial',
+    items: [
+      { name: 'Punto de Venta', to: '/pos', icon: ShoppingCart, permission: 'invoices.create' },
+      { name: 'Facturacion Electronica', to: '/electronic-invoice/invoices', icon: Receipt, permission: 'invoices.view' },
+      { name: 'Terceros', to: '/third-parties', icon: Users2, permission: 'third_parties.view' },
+      { name: 'Ventas', to: '/sales', icon: Banknote },
+      { name: 'Clientes', to: '/customers', icon: Users },
+    ],
+  },
+  {
+    label: 'Contabilidad',
+    items: [
+      { name: 'Plan de Cuentas', to: '/accounting/puc', icon: BookOpen, permission: 'accounting.view' },
+      { name: 'Comprobantes', to: '/accounting/vouchers', icon: ClipboardList, permission: 'accounting.view' },
+      { name: 'Periodos', to: '/accounting/periods', icon: CalendarDays, permission: 'accounting.close_period' },
+      { name: 'Centros de Costo', to: '/accounting/cost-centers', icon: Layers, permission: 'accounting.view' },
+    ],
+  },
+  {
+    label: 'Inventario',
+    items: [
+      { name: 'Productos', to: '/products', icon: Package },
+      { name: 'Categorias', to: '/categories', icon: FolderTree },
+      { name: 'Kardex', to: '/inventory/kardex', icon: FileClock, permission: 'inventory.view' },
+    ],
+  },
+  {
+    label: 'Tesoreria',
+    items: [
+      { name: 'Cuentas Bancarias', to: '/treasury/accounts', icon: CreditCard, permission: 'treasury.view' },
+      { name: 'Conciliacion', to: '/treasury/reconciliation', icon: ArrowLeftRight, permission: 'treasury.reconcile' },
+      { name: 'Flujo de Caja', to: '/treasury/cash-flow', icon: TrendingUp, permission: 'treasury.view' },
+    ],
+  },
+  {
+    label: 'Nomina',
+    items: [
+      { name: 'Empleados', to: '/payroll/employees', icon: Users2, permission: 'payroll.view' },
+      { name: 'Liquidacion', to: '/payroll/periods', icon: Wallet, permission: 'payroll.calculate' },
+    ],
+  },
+  {
+    label: 'Impuestos',
+    items: [
+      { name: 'Declaraciones', to: '/taxes/declarations', icon: Scale, permission: 'taxes.view' },
+      { name: 'Info Exogena', to: '/taxes/exogenous', icon: FileText, permission: 'taxes.view' },
+    ],
+  },
+  {
+    label: 'Reportes',
+    items: [
+      { name: 'Balance General', to: '/reports/balance-sheet', icon: BarChart3, permission: 'reports.view' },
+      { name: 'Estado de Resultados', to: '/reports/income-statement', icon: PieChart, permission: 'reports.view' },
+      { name: 'Balance de Prueba', to: '/reports/trial-balance', icon: BookMarked, permission: 'reports.view' },
+    ],
+  },
+  {
+    label: 'Administracion',
+    items: [
+      { name: 'Proveedores', to: '/suppliers', icon: Truck },
+      { name: 'Ordenes de Compra', to: '/purchase-orders', icon: ShoppingBag },
+      { name: 'Monedas', to: '/currencies', icon: DollarSign, adminOnly: true },
+      { name: 'Usuarios', to: '/users', icon: UserCog, adminOnly: true },
+      { name: 'Empresa', to: '/company', icon: Building2, permission: 'company.settings' },
+    ],
+  },
+];
 
-  const navigation = [
-    { name: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-    { name: 'Punto de Venta', to: '/pos', icon: ShoppingCart },
-    { name: 'Ventas', to: '/sales', icon: Receipt },
-    { name: 'Clientes', to: '/customers', icon: Users },
-    { name: 'Productos', to: '/products', icon: Package },
-    { name: 'Categorías', to: '/categories', icon: FolderTree },
-    { name: 'Proveedores', to: '/suppliers', icon: Truck },
-    { name: 'Órdenes de Compra', to: '/purchase-orders', icon: ShoppingBag },
-    { name: 'Reportes', to: '/reports', icon: FileText },
-    { name: 'Monedas', to: '/currencies', icon: DollarSign, adminOnly: true },
-    { name: 'Usuarios', to: '/users', icon: UserCog, adminOnly: true },
-  ];
+function NavGroup({ group, onNavigate }) {
+  const [open, setOpen] = useState(true);
+  const { can, isAdmin } = usePermission();
 
-  const filteredNav = navigation.filter(item => !item.adminOnly || isAdmin());
+  const visibleItems = group.items.filter((item) => {
+    if (item.adminOnly && !isAdmin) return false;
+    if (item.permission && !can(item.permission) && !isAdmin) return false;
+    return true;
+  });
+
+  if (visibleItems.length === 0) return null;
+
+  if (!group.label) {
+    return (
+      <div className="mb-1">
+        {visibleItems.map((item) => (
+          <NavItem key={item.to} item={item} onNavigate={onNavigate} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-1">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+      >
+        <span>{group.label}</span>
+        {open ? (
+          <ChevronDown className="w-3 h-3" />
+        ) : (
+          <ChevronRight className="w-3 h-3" />
+        )}
+      </button>
+
+      {open && (
+        <div>
+          {visibleItems.map((item) => (
+            <NavItem key={item.to} item={item} onNavigate={onNavigate} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NavItem({ item, onNavigate }) {
+  return (
+    <NavLink
+      to={item.to}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+          isActive
+            ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <item.icon
+            className={`w-4 h-4 flex-shrink-0 ${
+              isActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'
+            }`}
+            strokeWidth={1.75}
+          />
+          <span className="truncate">{item.name}</span>
+        </>
+      )}
+    </NavLink>
+  );
+}
+
+function SidebarContent({ onNavigate }) {
+  const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
-    if (confirm('¿Estás seguro de cerrar sesión?')) {
+    if (confirm('Confirmar cierre de sesion')) {
       logout();
       window.location.href = '/login';
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar Desktop */}
-      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-64 lg:bg-white dark:lg:bg-gray-800 lg:border-r lg:border-gray-200 dark:lg:border-gray-700">
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
-              <span className="text-white font-bold text-base">BM</span>
-            </div>
-            <div>
-              <h1 className="text-base font-bold text-gray-900 dark:text-white">Business</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Manager</p>
-            </div>
+    <div className="flex flex-col h-full">
+      {/* Logo */}
+      <div className="h-14 flex items-center px-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white" stroke="currentColor" strokeWidth={2}>
+              <path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3" strokeLinecap="round" />
+              <path d="M9 5a2 2 0 002-2h6a2 2 0 012 2v6a2 2 0 01-2 2h-2" strokeLinecap="round" />
+              <path d="M12 12h3m-3 4h6" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">ERP Colombia</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight">
+              {user?.company?.nombre_comercial ?? 'Sistema Contable'}
+            </p>
           </div>
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {filteredNav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
-                  isActive
-                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                }`
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <item.icon 
-                    className={`w-5 h-5 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} 
-                    strokeWidth={2}
-                  />
-                  <span>{item.name}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* User Profile + Theme Toggle + Notifications */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-          {/* Notificaciones + Theme Toggle */}
-          <div className="flex justify-center gap-2">
-            <NotificationBell />
-            <ThemeToggle />
-          </div>
-          
-          {/* User Info */}
-          <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-full flex items-center justify-center">
-              <span className="text-blue-700 dark:text-blue-300 font-semibold text-base">
-                {user?.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-base font-medium text-gray-900 dark:text-white truncate">
-                {user?.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md transition-all"
-              title="Cerrar sesión"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Sidebar Mobile */}
-      <div className="lg:hidden">
-        {/* Mobile Header */}
-        <div className="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 z-40">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">BM</span>
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-gray-900 dark:text-white">Business Manager</h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell />
-            <ThemeToggle />
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <Menu className="w-6 h-6 text-gray-600 dark:text-gray-300" />
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Sidebar Overlay */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden">
-            <div 
-              className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-              onClick={() => setSidebarOpen(false)}
-            />
-            <aside className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-xl flex flex-col animate-slide-in-left">
-              {/* Logo */}
-              <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center shadow-sm">
-                    <span className="text-white font-bold text-base">BM</span>
-                  </div>
-                  <div>
-                    <h1 className="text-base font-bold text-gray-900 dark:text-white">Business</h1>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Manager</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setSidebarOpen(false)}
-                  className="lg:hidden p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                >
-                  <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                </button>
-              </div>
-
-              {/* Navigation */}
-              <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                {filteredNav.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setSidebarOpen(false)}
-                    className={({ isActive }) =>
-                      `flex items-center gap-3 px-3 py-3 rounded-lg text-base font-medium transition-all duration-200 ${
-                        isActive
-                          ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                          : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                      }`
-                    }
-                  >
-                    {({ isActive }) => (
-                      <>
-                        <item.icon 
-                          className={`w-5 h-5 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`} 
-                          strokeWidth={2}
-                        />
-                        <span>{item.name}</span>
-                      </>
-                    )}
-                  </NavLink>
-                ))}
-              </nav>
-
-              {/* User Profile */}
-              <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-full flex items-center justify-center">
-                    <span className="text-blue-700 dark:text-blue-300 font-semibold text-base">
-                      {user?.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-medium text-gray-900 dark:text-white truncate">
-                      {user?.name}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{user?.role}</p>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md transition-all"
-                    title="Cerrar sesión"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </aside>
-          </div>
-        )}
       </div>
 
+      {/* Navigation */}
+      <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-0.5">
+        {navigationGroups.map((group, i) => (
+          <NavGroup key={i} group={group} onNavigate={onNavigate} />
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex items-center justify-between mb-2">
+          <NotificationBell />
+          <ThemeToggle />
+        </div>
+
+        <div className="flex items-center gap-2 px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group">
+          <div className="w-7 h-7 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-primary-700 dark:text-primary-300 font-semibold text-xs">
+              {user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-gray-900 dark:text-white truncate">{user?.name}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 capitalize truncate">{user?.role}</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded transition-all"
+            title="Cerrar sesion"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LayoutNew({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:w-60 lg:bg-white dark:lg:bg-gray-800 lg:border-r lg:border-gray-200 dark:lg:border-gray-700">
+        <SidebarContent onNavigate={undefined} />
+      </aside>
+
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-4 z-40">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-primary-600 rounded-lg flex items-center justify-center">
+            <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5 text-white" stroke="currentColor" strokeWidth={2}>
+              <path d="M9 7H6a2 2 0 00-2 2v9a2 2 0 002 2h9a2 2 0 002-2v-3" strokeLinecap="round" />
+              <path d="M9 5a2 2 0 002-2h6a2 2 0 012 2v6a2 2 0 01-2 2h-2" strokeLinecap="round" />
+            </svg>
+          </div>
+          <span className="text-sm font-bold text-gray-900 dark:text-white">ERP Colombia</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <ThemeToggle />
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <aside className="fixed inset-y-0 left-0 w-60 bg-white dark:bg-gray-800 shadow-xl animate-slide-in-left">
+            <div className="absolute top-3 right-3">
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+              >
+                <X className="w-4 h-4 text-gray-500" />
+              </button>
+            </div>
+            <SidebarContent onNavigate={() => setSidebarOpen(false)} />
+          </aside>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="lg:pl-64 bg-gray-50 dark:bg-gray-900">
-        <div className="pt-16 lg:pt-0">
+      <main className="lg:pl-60 bg-gray-50 dark:bg-gray-900 min-h-screen">
+        <div className="pt-14 lg:pt-0">
           <div className="p-4 sm:p-6 lg:p-8">
             {children}
           </div>

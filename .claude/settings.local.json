@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(composer require:*)",
+      "Bash(php artisan vendor:publish:*)",
+      "Bash(ls \"C:\\\\Users\\\\davin\\\\Business-Management\\\\business-management-frontend\\\\src\\\\pages\"\" 2>/dev/null || echo \"NOT FOUND \")",
+      "Bash(dir:*)"
+    ]
+  }
+}
