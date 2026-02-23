@@ -30,8 +30,10 @@ const ReportsPage = lazy(() => import('./pages/Reports'));
 const ThirdParties = lazy(() => import('./pages/third-parties/ThirdParties'));
 
 // Módulo: Contabilidad
-const PucAccounts = lazy(() => import('./pages/accounting/PucAccounts'));
-const Vouchers = lazy(() => import('./pages/accounting/Vouchers'));
+const PucAccounts    = lazy(() => import('./pages/accounting/PucAccounts'));
+const Vouchers       = lazy(() => import('./pages/accounting/Vouchers'));
+const VoucherCreate  = lazy(() => import('./pages/accounting/VoucherCreate'));
+const VoucherDetail  = lazy(() => import('./pages/accounting/VoucherDetail'));
 
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -96,6 +98,8 @@ function App() {
           {/* Contabilidad */}
           <Route path="/accounting/puc" element={<ProtectedRoute><PucAccounts /></ProtectedRoute>} />
           <Route path="/accounting/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
+          <Route path="/accounting/vouchers/create" element={<ProtectedRoute><VoucherCreate /></ProtectedRoute>} />
+          <Route path="/accounting/vouchers/:id" element={<ProtectedRoute><VoucherDetail /></ProtectedRoute>} />
 
           {/* Inventario */}
           <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
