@@ -11,8 +11,9 @@ import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 
 // Módulo: Inventario/Productos
-const Products = lazy(() => import('./pages/Products'));
+const Products   = lazy(() => import('./pages/Products'));
 const Categories = lazy(() => import('./pages/Categories'));
+const Kardex     = lazy(() => import('./pages/inventory/Kardex'));
 
 // Módulo: Comercial
 const POS = lazy(() => import('./pages/POS'));
@@ -104,6 +105,7 @@ function App() {
           {/* Inventario */}
           <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
+          <Route path="/inventory/kardex" element={<ProtectedRoute><Kardex /></ProtectedRoute>} />
 
           {/* Administración */}
           <Route path="/users" element={<AdminRoute><Users /></AdminRoute>} />

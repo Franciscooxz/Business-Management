@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, FileSpreadsheet, Upload } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Search, Filter, Edit, Trash2, FileSpreadsheet, Upload, BarChart2 } from 'lucide-react';
 import api from '../api/axios';
 import LayoutNew from '../components/layout/LayoutNew';
 import ProductModal from '../components/products/ProductModal';
@@ -260,30 +261,43 @@ export default function Products() {
                     </p>
                   )}
 
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-1.5 mb-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">Precio:</span>
-                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">Precio venta:</span>
+                      <span className="text-base font-bold text-blue-600 dark:text-blue-400">
                         {product.currency?.symbol || '$'}{parseFloat(product.price).toFixed(2)}
                       </span>
                     </div>
+                    {product.avg_cost > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Costo promedio:</span>
+                        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                          ${parseFloat(product.avg_cost).toLocaleString('es-CO', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-gray-500 dark:text-gray-400">Stock:</span>
                       <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {product.stock} unidades
+                        {product.stock} {product.unit_of_measure ?? 'UND'}
                       </span>
                     </div>
                     {product.sku && (
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500 dark:text-gray-400">SKU:</span>
-                        <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
-                          {product.sku}
-                        </span>
+                        <span className="text-xs font-mono text-gray-600 dark:text-gray-400">{product.sku}</span>
                       </div>
                     )}
                   </div>
 
-                  <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
+                  <div className="flex gap-1.5 pt-3 border-t border-gray-100 dark:border-gray-700">
+                    <Link
+                      to={`/inventory/kardex?product_id=${product.id}`}
+                      className="btn btn-secondary text-xs px-2 py-1.5"
+                      title="Ver Kardex"
+                    >
+                      <BarChart2 className="w-3.5 h-3.5" />
+                    </Link>
                     <button
                       onClick={() => handleEdit(product)}
                       className="flex-1 btn btn-secondary text-sm"
@@ -293,10 +307,9 @@ export default function Products() {
                     </button>
                     <button
                       onClick={() => handleDelete(product.id)}
-                      className="flex-1 btn text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50"
+                      className="btn text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 px-2.5"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Eliminar
                     </button>
                   </div>
                 </div>

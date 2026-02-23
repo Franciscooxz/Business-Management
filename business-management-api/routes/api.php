@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Api\ThirdParty\ThirdPartyController;
 use App\Http\Controllers\Api\Accounting\PucAccountController;
 use App\Http\Controllers\Api\Accounting\VoucherController;
+use App\Http\Controllers\Api\Inventory\KardexController;
 
 // Rutas públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -117,5 +118,21 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('vouchers/{voucher}/post', [VoucherController::class, 'post']);
         Route::post('vouchers/{voucher}/reverse', [VoucherController::class, 'reverse']);
         Route::apiResource('vouchers', VoucherController::class)->except(['update', 'destroy']);
+    });
+
+    // =========================================================================
+    // ERP: INVENTARIO — KARDEX
+    // =========================================================================
+    Route::prefix('inventory')->group(function () {
+        // Tarjeta Kardex de un producto
+        Route::get('kardex/{productId}', [KardexController::class, 'show']);
+
+        // Lista global de movimientos
+        Route::get('movements', [KardexController::class, 'index']);
+        Route::post('movements', [KardexController::class, 'store']);
+        Route::get('movements/types', [KardexController::class, 'types']);
+
+        // Alertas de stock
+        Route::get('stock-alerts', [KardexController::class, 'stockAlerts']);
     });
 });
