@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\Payroll\PayrollSettingController;
 use App\Http\Controllers\Api\Tax\TaxConceptController;
 use App\Http\Controllers\Api\Tax\TaxDeclarationController;
 use App\Http\Controllers\Api\Tax\WithholdingController;
+use App\Http\Controllers\Api\Reports\FinancialReportController;
 
 // Rutas públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -245,5 +246,17 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('declarations/{taxDeclaration}/present',   [TaxDeclarationController::class, 'present']);
         Route::post('declarations/{taxDeclaration}/pay',       [TaxDeclarationController::class, 'pay']);
         Route::apiResource('declarations', TaxDeclarationController::class)->except(['update', 'destroy']);
+    });
+
+    // =========================================================================
+    // ERP: REPORTES FINANCIEROS
+    // =========================================================================
+    Route::prefix('reports')->group(function () {
+        Route::get('trial-balance',    [FinancialReportController::class, 'trialBalance']);
+        Route::get('balance-sheet',    [FinancialReportController::class, 'balanceSheet']);
+        Route::get('income-statement', [FinancialReportController::class, 'incomeStatement']);
+        Route::get('general-ledger',   [FinancialReportController::class, 'generalLedger']);
+        Route::get('journal',          [FinancialReportController::class, 'journal']);
+        Route::get('financial-ratios', [FinancialReportController::class, 'financialRatios']);
     });
 });

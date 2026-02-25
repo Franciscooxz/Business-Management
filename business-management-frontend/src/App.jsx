@@ -54,6 +54,13 @@ const PayrollPeriods   = lazy(() => import('./pages/payroll/PayrollPeriods'));
 const PayrollDetail    = lazy(() => import('./pages/payroll/PayrollDetail'));
 const PayrollSettings  = lazy(() => import('./pages/payroll/PayrollSettings'));
 
+// Módulo: Reportes Financieros
+const TrialBalance       = lazy(() => import('./pages/reports/TrialBalance'));
+const BalanceSheet       = lazy(() => import('./pages/reports/BalanceSheet'));
+const IncomeStatement    = lazy(() => import('./pages/reports/IncomeStatement'));
+const GeneralLedger      = lazy(() => import('./pages/reports/GeneralLedger'));
+const FinancialDashboard = lazy(() => import('./pages/reports/FinancialDashboard'));
+
 // Módulo: Tesorería
 const BankAccounts       = lazy(() => import('./pages/treasury/BankAccounts'));
 const TreasuryMovements  = lazy(() => import('./pages/treasury/TreasuryMovements'));
@@ -143,6 +150,13 @@ function App() {
           <Route path="/electronic-invoice" element={<ProtectedRoute><ElectronicInvoices /></ProtectedRoute>} />
           <Route path="/electronic-invoice/create" element={<ProtectedRoute><InvoiceCreate /></ProtectedRoute>} />
           <Route path="/electronic-invoice/:id" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
+
+          {/* Reportes Financieros */}
+          <Route path="/reports/trial-balance"    element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
+          <Route path="/reports/balance-sheet"    element={<ProtectedRoute><BalanceSheet /></ProtectedRoute>} />
+          <Route path="/reports/income-statement" element={<ProtectedRoute><IncomeStatement /></ProtectedRoute>} />
+          <Route path="/reports/general-ledger"   element={<ProtectedRoute><GeneralLedger /></ProtectedRoute>} />
+          <Route path="/reports/financial-ratios" element={<ProtectedRoute><FinancialDashboard /></ProtectedRoute>} />
 
           {/* Impuestos */}
           <Route path="/taxes/concepts"              element={<ProtectedRoute><TaxConcepts /></ProtectedRoute>} />

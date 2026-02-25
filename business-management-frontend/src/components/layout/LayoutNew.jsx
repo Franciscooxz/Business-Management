@@ -105,9 +105,11 @@ const navigationGroups = [
   {
     label: 'Reportes',
     items: [
-      { name: 'Balance General', to: '/reports/balance-sheet', icon: BarChart3, permission: 'reports.view' },
-      { name: 'Estado de Resultados', to: '/reports/income-statement', icon: PieChart, permission: 'reports.view' },
-      { name: 'Balance de Prueba', to: '/reports/trial-balance', icon: BookMarked, permission: 'reports.view' },
+      { name: 'Balance de Prueba',       to: '/reports/trial-balance',    icon: BookMarked, permission: 'reports.view' },
+      { name: 'Balance General',         to: '/reports/balance-sheet',    icon: BarChart3,  permission: 'reports.view' },
+      { name: 'Estado de Resultados',    to: '/reports/income-statement', icon: PieChart,   permission: 'reports.view' },
+      { name: 'Libros Contables',        to: '/reports/general-ledger',   icon: BookOpen,   permission: 'reports.view' },
+      { name: 'Indicadores Financieros', to: '/reports/financial-ratios', icon: TrendingUp, permission: 'reports.view' },
     ],
   },
   {
