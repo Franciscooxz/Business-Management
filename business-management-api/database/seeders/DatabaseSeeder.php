@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
             // ProductSeeder removido: no existe en este proyecto
             CurrencySeeder::class,
             PucColombiaSeeder::class,
+            PayrollSettingSeeder::class,
+            TaxConceptSeeder::class,
         ]);
     }
 }

@@ -19,6 +19,16 @@ use App\Http\Controllers\Api\Accounting\VoucherController;
 use App\Http\Controllers\Api\Inventory\KardexController;
 use App\Http\Controllers\Api\ElectronicInvoice\ElectronicInvoiceController;
 use App\Http\Controllers\Api\ElectronicInvoice\DianResolutionController;
+use App\Http\Controllers\Api\Treasury\BankAccountController;
+use App\Http\Controllers\Api\Treasury\TreasuryMovementController;
+use App\Http\Controllers\Api\Treasury\AccountsReceivableController;
+use App\Http\Controllers\Api\Treasury\AccountsPayableController;
+use App\Http\Controllers\Api\Payroll\EmployeeController;
+use App\Http\Controllers\Api\Payroll\PayrollPeriodController;
+use App\Http\Controllers\Api\Payroll\PayrollSettingController;
+use App\Http\Controllers\Api\Tax\TaxConceptController;
+use App\Http\Controllers\Api\Tax\TaxDeclarationController;
+use App\Http\Controllers\Api\Tax\WithholdingController;
 
 // Rutas públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -164,5 +174,76 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::post('{resolution}/activate', [DianResolutionController::class, 'activate']);
         Route::apiResource('/', DianResolutionController::class)
             ->parameters(['' => 'resolution']);
+    });
+
+    // =========================================================================
+    // ERP: TESORERÍA
+    // =========================================================================
+    Route::prefix('treasury')->group(function () {
+
+        // ── Cuentas Bancarias ─────────────────────────────────────────────────
+        Route::get('bank-accounts/{bankAccount}/movements', [BankAccountController::class, 'movements']);
+        Route::get('bank-accounts/{bankAccount}/summary',   [BankAccountController::class, 'summary']);
+        Route::apiResource('bank-accounts', BankAccountController::class);
+
+        // ── Movimientos de Tesorería ──────────────────────────────────────────
+        Route::get('movements/types',           [TreasuryMovementController::class, 'types']);
+        Route::get('movements/cash-flow',       [TreasuryMovementController::class, 'cashFlow']);
+        Route::post('movements/{movement}/reverse', [TreasuryMovementController::class, 'reverse']);
+        Route::apiResource('movements', TreasuryMovementController::class)->except(['update', 'destroy']);
+
+        // ── Cuentas por Cobrar ────────────────────────────────────────────────
+        Route::get('accounts-receivable/aging',          [AccountsReceivableController::class, 'aging']);
+        Route::post('accounts-receivable/{accountsReceivable}/pay', [AccountsReceivableController::class, 'pay']);
+        Route::apiResource('accounts-receivable', AccountsReceivableController::class)->except(['update', 'destroy']);
+
+        // ── Cuentas por Pagar ─────────────────────────────────────────────────
+        Route::get('accounts-payable/aging',             [AccountsPayableController::class, 'aging']);
+        Route::post('accounts-payable/{accountsPayable}/pay', [AccountsPayableController::class, 'pay']);
+        Route::apiResource('accounts-payable', AccountsPayableController::class)->except(['update', 'destroy']);
+    });
+
+    // =========================================================================
+    // ERP: NÓMINA
+    // =========================================================================
+    Route::prefix('payroll')->group(function () {
+
+        // ── Constantes de nómina ──────────────────────────────────────────────
+        Route::get('constants', [PayrollPeriodController::class, 'constants']);
+
+        // ── Configuración (SMMLV por año) ─────────────────────────────────────
+        Route::post('settings/{setting}/activate', [PayrollSettingController::class, 'activate']);
+        Route::apiResource('settings', PayrollSettingController::class)->except(['show']);
+
+        // ── Empleados ─────────────────────────────────────────────────────────
+        Route::apiResource('employees', EmployeeController::class);
+
+        // ── Períodos de nómina ────────────────────────────────────────────────
+        Route::post('periods/{period}/calculate',            [PayrollPeriodController::class, 'calculate']);
+        Route::patch('periods/{period}/items/{item}',        [PayrollPeriodController::class, 'updateItem']);
+        Route::post('periods/{period}/cancel',               [PayrollPeriodController::class, 'cancel']);
+        Route::apiResource('periods', PayrollPeriodController::class)->except(['update', 'destroy']);
+    });
+
+    // =========================================================================
+    // ERP: IMPUESTOS
+    // =========================================================================
+    Route::prefix('taxes')->group(function () {
+
+        // ── Conceptos tributarios (ReteFuente, IVA, ICA…) ─────────────────────
+        Route::apiResource('concepts', TaxConceptController::class)->except(['show']);
+
+        // ── Retenciones (entradas individuales) ───────────────────────────────
+        // Rutas específicas ANTES del apiResource para evitar conflictos con {withholdingEntry}
+        Route::get('withholding/summary',                     [WithholdingController::class, 'summary']);
+        Route::get('withholding/certificate/{thirdPartyId}',  [WithholdingController::class, 'certificate']);
+        Route::get('withholding/exogenous',                   [WithholdingController::class, 'exogenous']);
+        Route::apiResource('withholding', WithholdingController::class)->except(['show']);
+
+        // ── Declaraciones tributarias ─────────────────────────────────────────
+        Route::post('declarations/{taxDeclaration}/calculate', [TaxDeclarationController::class, 'calculate']);
+        Route::post('declarations/{taxDeclaration}/present',   [TaxDeclarationController::class, 'present']);
+        Route::post('declarations/{taxDeclaration}/pay',       [TaxDeclarationController::class, 'pay']);
+        Route::apiResource('declarations', TaxDeclarationController::class)->except(['update', 'destroy']);
     });
 });

@@ -23,6 +23,7 @@ import {
   Banknote,
   ArrowLeftRight,
   TrendingUp,
+  TrendingDown,
   Users2,
   Building2,
   ChevronDown,
@@ -33,6 +34,7 @@ import {
   BookMarked,
   Wallet,
   FileClock,
+  Settings,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import { usePermission } from '../../hooks/usePermission';
@@ -76,23 +78,28 @@ const navigationGroups = [
   {
     label: 'Tesoreria',
     items: [
-      { name: 'Cuentas Bancarias', to: '/treasury/accounts', icon: CreditCard, permission: 'treasury.view' },
-      { name: 'Conciliacion', to: '/treasury/reconciliation', icon: ArrowLeftRight, permission: 'treasury.reconcile' },
-      { name: 'Flujo de Caja', to: '/treasury/cash-flow', icon: TrendingUp, permission: 'treasury.view' },
+      { name: 'Cuentas Bancarias', to: '/treasury/accounts',  icon: CreditCard,  permission: 'treasury.view' },
+      { name: 'Movimientos',       to: '/treasury/movements', icon: ArrowLeftRight, permission: 'treasury.view' },
+      { name: 'CxC',               to: '/treasury/receivable',icon: TrendingUp,  permission: 'treasury.view' },
+      { name: 'CxP',               to: '/treasury/payable',   icon: TrendingDown,permission: 'treasury.view' },
+      { name: 'Flujo de Caja',     to: '/treasury/cash-flow', icon: BarChart3,   permission: 'treasury.view' },
     ],
   },
   {
     label: 'Nomina',
     items: [
-      { name: 'Empleados', to: '/payroll/employees', icon: Users2, permission: 'payroll.view' },
-      { name: 'Liquidacion', to: '/payroll/periods', icon: Wallet, permission: 'payroll.calculate' },
+      { name: 'Empleados',     to: '/payroll/employees', icon: Users2,    permission: 'payroll.view' },
+      { name: 'Liquidacion',   to: '/payroll/periods',   icon: Wallet,    permission: 'payroll.view' },
+      { name: 'Configuracion', to: '/payroll/settings',  icon: Settings,  permission: 'payroll.view' },
     ],
   },
   {
     label: 'Impuestos',
     items: [
-      { name: 'Declaraciones', to: '/taxes/declarations', icon: Scale, permission: 'taxes.view' },
-      { name: 'Info Exogena', to: '/taxes/exogenous', icon: FileText, permission: 'taxes.view' },
+      { name: 'Conceptos',     to: '/taxes/concepts',     icon: BookMarked, permission: 'taxes.view' },
+      { name: 'Retenciones',   to: '/taxes/withholding',  icon: Scale,      permission: 'taxes.view' },
+      { name: 'Declaraciones', to: '/taxes/declarations', icon: ClipboardList, permission: 'taxes.view' },
+      { name: 'Info Exogena',  to: '/taxes/exogenous',    icon: FileText,   permission: 'taxes.view' },
     ],
   },
   {

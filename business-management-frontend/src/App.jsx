@@ -41,6 +41,26 @@ const Vouchers       = lazy(() => import('./pages/accounting/Vouchers'));
 const VoucherCreate  = lazy(() => import('./pages/accounting/VoucherCreate'));
 const VoucherDetail  = lazy(() => import('./pages/accounting/VoucherDetail'));
 
+// Módulo: Impuestos
+const TaxConcepts        = lazy(() => import('./pages/taxes/TaxConcepts'));
+const Declarations       = lazy(() => import('./pages/taxes/Declarations'));
+const DeclarationDetail  = lazy(() => import('./pages/taxes/DeclarationDetail'));
+const Withholding        = lazy(() => import('./pages/taxes/Withholding'));
+const ExogenousInfo      = lazy(() => import('./pages/taxes/ExogenousInfo'));
+
+// Módulo: Nómina
+const Employees        = lazy(() => import('./pages/payroll/Employees'));
+const PayrollPeriods   = lazy(() => import('./pages/payroll/PayrollPeriods'));
+const PayrollDetail    = lazy(() => import('./pages/payroll/PayrollDetail'));
+const PayrollSettings  = lazy(() => import('./pages/payroll/PayrollSettings'));
+
+// Módulo: Tesorería
+const BankAccounts       = lazy(() => import('./pages/treasury/BankAccounts'));
+const TreasuryMovements  = lazy(() => import('./pages/treasury/TreasuryMovements'));
+const AccountsReceivable = lazy(() => import('./pages/treasury/AccountsReceivable'));
+const AccountsPayable    = lazy(() => import('./pages/treasury/AccountsPayable'));
+const CashFlow           = lazy(() => import('./pages/treasury/CashFlow'));
+
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Spinner de carga entre módulos
@@ -123,6 +143,26 @@ function App() {
           <Route path="/electronic-invoice" element={<ProtectedRoute><ElectronicInvoices /></ProtectedRoute>} />
           <Route path="/electronic-invoice/create" element={<ProtectedRoute><InvoiceCreate /></ProtectedRoute>} />
           <Route path="/electronic-invoice/:id" element={<ProtectedRoute><InvoiceDetail /></ProtectedRoute>} />
+
+          {/* Impuestos */}
+          <Route path="/taxes/concepts"              element={<ProtectedRoute><TaxConcepts /></ProtectedRoute>} />
+          <Route path="/taxes/declarations"          element={<ProtectedRoute><Declarations /></ProtectedRoute>} />
+          <Route path="/taxes/declarations/:id"      element={<ProtectedRoute><DeclarationDetail /></ProtectedRoute>} />
+          <Route path="/taxes/withholding"           element={<ProtectedRoute><Withholding /></ProtectedRoute>} />
+          <Route path="/taxes/exogenous"             element={<ProtectedRoute><ExogenousInfo /></ProtectedRoute>} />
+
+          {/* Nómina */}
+          <Route path="/payroll/employees"        element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+          <Route path="/payroll/periods"          element={<ProtectedRoute><PayrollPeriods /></ProtectedRoute>} />
+          <Route path="/payroll/periods/:id"      element={<ProtectedRoute><PayrollDetail /></ProtectedRoute>} />
+          <Route path="/payroll/settings"         element={<ProtectedRoute><PayrollSettings /></ProtectedRoute>} />
+
+          {/* Tesorería */}
+          <Route path="/treasury/accounts"    element={<ProtectedRoute><BankAccounts /></ProtectedRoute>} />
+          <Route path="/treasury/movements"   element={<ProtectedRoute><TreasuryMovements /></ProtectedRoute>} />
+          <Route path="/treasury/receivable"  element={<ProtectedRoute><AccountsReceivable /></ProtectedRoute>} />
+          <Route path="/treasury/payable"     element={<ProtectedRoute><AccountsPayable /></ProtectedRoute>} />
+          <Route path="/treasury/cash-flow"   element={<ProtectedRoute><CashFlow /></ProtectedRoute>} />
 
           {/* Redirects */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
