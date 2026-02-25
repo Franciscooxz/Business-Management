@@ -107,7 +107,7 @@ class SaleController extends Controller
 
                 if ($this->stockService) {
                     $this->stockService->registerMovement(
-                        $product->id, auth()->id(), 'salida',
+                        $product->id, auth()->id(), 'venta',
                         -$item['quantity'], "Venta #{$sale->id}"
                     );
                 }
@@ -254,7 +254,7 @@ class SaleController extends Controller
                     $product->increment('stock', $item->quantity);
                     if ($this->stockService) {
                         $this->stockService->registerMovement(
-                            $product->id, auth()->id(), 'entrada',
+                            $product->id, auth()->id(), 'devolucion_venta',
                             $item->quantity, "Cancelación de venta #{$sale->id}"
                         );
                     }

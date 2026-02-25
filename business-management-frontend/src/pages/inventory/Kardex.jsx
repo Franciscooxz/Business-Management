@@ -171,26 +171,22 @@ export default function Kardex() {
 
   return (
     <LayoutNew>
-      <div className="space-y-5">
+      <div className="space-y-6">
 
         {/* ── Header ──────────────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Kardex</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Tarjeta de inventario permanente — saldos corridos
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="page-header">
+            <h1 className="page-title">Kardex</h1>
+            <p className="page-subtitle">Tarjeta de inventario permanente — saldos corridos</p>
           </div>
           {product && (
-            <div className="flex gap-2">
-              <button
-                onClick={() => setModalOpen(true)}
-                className="btn btn-primary self-start sm:self-auto"
-              >
-                <Plus className="w-4 h-4" />
-                Ajuste Manual
-              </button>
-            </div>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="btn btn-primary self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              Ajuste Manual
+            </button>
           )}
         </div>
 

@@ -33,8 +33,10 @@ use App\Http\Controllers\Api\Reports\FinancialReportController;
 use App\Http\Controllers\Api\AuditLogController;
 
 // ── Rutas públicas ──────────────────────────────────────────────────────────
-Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+
+// Registro deshabilitado — los usuarios los crea el super_admin desde el panel
+// Route::post('/register', [AuthController::class, 'register']);
 
 // ── Rutas protegidas (autenticación + throttle general 60/min) ──────────────
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {

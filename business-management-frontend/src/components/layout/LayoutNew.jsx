@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
+  LayoutGrid,
   Package,
   FolderTree,
   Users,
@@ -71,6 +72,7 @@ const navigationGroups = [
   {
     label: 'Inventario',
     items: [
+      { name: 'Resumen', to: '/inventory', icon: LayoutGrid, permission: 'inventory.view' },
       { name: 'Productos', to: '/products', icon: Package },
       { name: 'Categorias', to: '/categories', icon: FolderTree },
       { name: 'Kardex', to: '/inventory/kardex', icon: FileClock, permission: 'inventory.view' },
@@ -224,7 +226,7 @@ function SidebarContent({ onNavigate }) {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">ERP Colombia</p>
+            <p className="text-sm font-bold text-gray-900 dark:text-white leading-tight">Adminova</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 leading-tight">
               {user?.company?.nombre_comercial ?? 'Sistema Contable'}
             </p>
@@ -288,7 +290,7 @@ export default function LayoutNew({ children }) {
               <path d="M9 5a2 2 0 002-2h6a2 2 0 012 2v6a2 2 0 01-2 2h-2" strokeLinecap="round" />
             </svg>
           </div>
-          <span className="text-sm font-bold text-gray-900 dark:text-white">ERP Colombia</span>
+          <span className="text-sm font-bold text-gray-900 dark:text-white">Adminova</span>
         </div>
         <div className="flex items-center gap-1">
           <NotificationBell />

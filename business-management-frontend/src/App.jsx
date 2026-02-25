@@ -6,12 +6,12 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Auth (no lazy — siempre necesario)
 import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
 
 // Core pages (eager — se usan siempre al entrar)
 import Dashboard from './pages/Dashboard';
 
 // Módulo: Inventario/Productos
+const InventoryOverview = lazy(() => import('./pages/inventory/InventoryOverview'));
 const Products   = lazy(() => import('./pages/Products'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Kardex     = lazy(() => import('./pages/inventory/Kardex'));
@@ -120,7 +120,7 @@ function App() {
         <Routes>
           {/* Public */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Navigate to="/login" replace />} />
 
           {/* Dashboard */}
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -140,6 +140,7 @@ function App() {
           <Route path="/accounting/vouchers/:id" element={<ProtectedRoute><VoucherDetail /></ProtectedRoute>} />
 
           {/* Inventario */}
+          <Route path="/inventory" element={<ProtectedRoute><InventoryOverview /></ProtectedRoute>} />
           <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
           <Route path="/inventory/kardex" element={<ProtectedRoute><Kardex /></ProtectedRoute>} />

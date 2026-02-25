@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import { showSuccess, showError } from '../../utils/toast';
@@ -46,7 +46,7 @@ export default function Login() {
           {/* Logo */}
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-lg mb-6">
-              <span className="text-white font-bold text-2xl">BM</span>
+              <span className="text-white font-bold text-2xl">A</span>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Bienvenido de nuevo
@@ -148,16 +148,6 @@ export default function Login() {
               )}
             </button>
 
-            {/* Register Link */}
-            <p className="text-center text-base text-gray-600">
-              ¿No tienes cuenta?{' '}
-              <Link 
-                to="/register" 
-                className="font-semibold text-blue-600 hover:text-blue-700 transition-colors"
-              >
-                Regístrate aquí
-              </Link>
-            </p>
           </form>
         </div>
       </div>
@@ -168,10 +158,10 @@ export default function Login() {
         <div className="relative h-full flex flex-col items-center justify-center p-12 text-white">
           <div className="max-w-lg">
             <h1 className="text-5xl font-bold mb-6">
-              Business Manager
+              Adminova
             </h1>
             <p className="text-xl text-blue-100 leading-relaxed mb-8">
-              Sistema completo de gestión empresarial. Controla inventario, ventas, usuarios y más desde una sola plataforma.
+              Sistema completo de gestión empresarial. Controla inventario, ventas, contabilidad y más desde una sola plataforma.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">

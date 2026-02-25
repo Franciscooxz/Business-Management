@@ -10,7 +10,11 @@ class Sale extends Model
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'customer_id',
+        'third_party_id',
+        'electronic_invoice_id',
+        'currency_id',
         'customer_name',
         'customer_email',
         'customer_phone',
