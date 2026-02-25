@@ -17,8 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'company' => \App\Http\Middleware\EnsureCompanyContext::class,
         ]);
 
-        // Rate limiting diferenciado por tipo de ruta
-        $middleware->throttleWithRedis();
+        // Rate limiting usando cache driver por defecto (file/database, no Redis)
+        // throttleWithRedis() requiere extensión PhpRedis que no está en XAMPP
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

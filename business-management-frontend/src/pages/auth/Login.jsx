@@ -15,17 +15,16 @@ export default function Login() {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
-      console.log('🔐 Intentando login con:', data.email);
-      
       const response = await login(data.email, data.password);
-      
-      console.log('✅ Login exitoso:', response);
+
       showSuccess(`¡Bienvenido, ${response.user.name}!`);
-      navigate('/dashboard');
+      // Super admin va directo al panel de administración
+      if (response.user.role === 'super_admin') {
+        navigate('/admin/companies');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
-      console.error('❌ Error completo:', err);
-      console.error('❌ Error response:', err.response?.data);
-      
       if (err.response?.status === 422) {
         showError('Email o contraseña incorrectos');
       } else if (err.response?.data?.message) {

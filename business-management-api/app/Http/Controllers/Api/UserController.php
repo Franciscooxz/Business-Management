@@ -7,182 +7,165 @@ use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::with('role');
+        $authUser = auth()->user();
+        $query = User::with('roles');
 
-        // BÚSQUEDA POR TEXTO
-        if ($request->has('search') && $request->search != '') {
+        // Scope: admin solo ve usuarios de su empresa; super_admin ve todos
+        if (! $authUser->hasRole('super_admin')) {
+            $query->where('company_id', $authUser->company_id)
+                  ->whereDoesntHave('roles', fn($q) => $q->where('name', 'super_admin'));
+        }
+
+        if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                ->orWhere('email', 'LIKE', "%{$search}%");
+                  ->orWhere('email', 'LIKE', "%{$search}%");
             });
         }
 
-        // FILTRO POR ROL
-        if ($request->has('role') && $request->role != '') {
-            $query->whereHas('role', function($q) use ($request) {
-                $q->where('name', $request->role);
-            });
+        if ($request->filled('role')) {
+            $query->whereHas('roles', fn($q) => $q->where('name', $request->role));
         }
 
-        // FILTRO POR ESTADO
-        if ($request->has('is_active') && $request->is_active != '') {
-            $isActive = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN);
-            $query->where('is_active', $isActive);
+        if ($request->filled('is_active')) {
+            $query->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
         }
 
-        // ORDENAMIENTO
-        $orderBy = $request->get('order_by', 'created_at');
-        $order = $request->get('order', 'desc');
+        if ($request->filled('company_id') && $authUser->hasRole('super_admin')) {
+            $query->where('company_id', $request->company_id);
+        }
 
         $allowedOrderBy = ['name', 'email', 'created_at'];
-        if (!in_array($orderBy, $allowedOrderBy)) {
-            $orderBy = 'created_at';
-        }
+        $orderBy = in_array($request->get('order_by', 'created_at'), $allowedOrderBy)
+            ? $request->get('order_by', 'created_at')
+            : 'created_at';
+        $order = in_array(strtolower($request->get('order', 'desc')), ['asc', 'desc'])
+            ? strtolower($request->get('order', 'desc'))
+            : 'desc';
 
-        $order = strtolower($order);
-        if (!in_array($order, ['asc', 'desc'])) {
-            $order = 'desc';
-        }
-
-        $query->orderBy($orderBy, $order);
-
-        // PAGINACIÓN
-        $perPage = $request->get('per_page', 15); // Default: 15 para usuarios
-        $perPage = min(max((int)$perPage, 1), 100);
-
-        $users = $query->paginate($perPage);
+        $perPage = min(max((int) $request->get('per_page', 15), 1), 100);
+        $users   = $query->orderBy($orderBy, $order)->paginate($perPage);
 
         return response()->json([
-            'success' => true,
-            'filters_applied' => [
-                'search' => $request->search ?? null,
-                'role' => $request->role ?? null,
-                'is_active' => $request->is_active ?? null,
-                'order_by' => $orderBy,
-                'order' => $order,
-            ],
+            'success'    => true,
             'pagination' => [
                 'current_page' => $users->currentPage(),
-                'last_page' => $users->lastPage(),
-                'per_page' => $users->perPage(),
-                'total' => $users->total(),
-                'from' => $users->firstItem(),
-                'to' => $users->lastItem(),
+                'last_page'    => $users->lastPage(),
+                'per_page'     => $users->perPage(),
+                'total'        => $users->total(),
+                'from'         => $users->firstItem(),
+                'to'           => $users->lastItem(),
             ],
-            'data' => $users->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role->name,
-                    'is_active' => $user->is_active,
-                    'created_at' => $user->created_at,
-                ];
-            }),
+            'data' => $users->map(fn($user) => $this->formatUser($user)),
         ], 200);
     }
 
-    public function store(StoreUserRequest $request) // 👈 CAMBIO
+    public function store(StoreUserRequest $request)
     {
-        // Validación y autorización ya hechas
-        
+        $authUser  = auth()->user();
+        $companyId = $authUser->hasRole('super_admin')
+            ? ($request->company_id ?? null)
+            : $authUser->company_id;
+
+        // Obtener role_id desde Spatie si viene el nombre del rol
+        $roleId = $request->role_id;
+        if (! $roleId && $request->filled('role')) {
+            $spatieRole = Role::where('name', $request->role)->first();
+            $roleId = $spatieRole?->id;
+        }
+
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $request->password,
-            'role_id' => $request->role_id,
-            'is_active' => true,
+            'name'       => $request->name,
+            'email'      => $request->email,
+            'password'   => $request->password,
+            'role_id'    => $roleId,
+            'company_id' => $companyId,
+            'is_active'  => true,
         ]);
 
-        $user->load('role');
+        // Asignar rol Spatie
+        if ($request->filled('role')) {
+            $user->assignRole($request->role);
+        } elseif ($roleId) {
+            $spatieRole = Role::find($roleId);
+            if ($spatieRole) $user->assignRole($spatieRole->name);
+        }
+
+        $user->load('roles');
 
         return response()->json([
             'success' => true,
-            'message' => 'User created successfully',
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role->name,
-                'is_active' => $user->is_active,
-            ],
+            'message' => 'Usuario creado exitosamente.',
+            'data'    => $this->formatUser($user),
         ], 201);
     }
 
     public function show(string $id)
     {
-        $user = User::with('role')->find($id);
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found',
-            ], 404);
-        }
+        $user = $this->findUser($id);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role->name,
-                'is_active' => $user->is_active,
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at,
-            ],
+            'data'    => $this->formatUser($user),
         ], 200);
     }
 
-    public function update(UpdateUserRequest $request, string $id) // 👈 CAMBIO
+    public function update(UpdateUserRequest $request, string $id)
     {
-        $user = User::find($id);
+        $user = $this->findUser($id);
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found',
-            ], 404);
+        $data = $request->only(['name', 'email', 'password', 'is_active']);
+
+        // Actualizar rol
+        if ($request->filled('role')) {
+            $spatieRole = Role::where('name', $request->role)->first();
+            if ($spatieRole) {
+                $data['role_id'] = $spatieRole->id;
+                $user->syncRoles([$request->role]);
+            }
+        } elseif ($request->filled('role_id')) {
+            $data['role_id'] = $request->role_id;
+            $spatieRole = Role::find($request->role_id);
+            if ($spatieRole) $user->syncRoles([$spatieRole->name]);
         }
 
-        // Actualizar solo campos presentes
-        $user->update($request->only(['name', 'email', 'password', 'role_id', 'is_active']));
-        $user->load('role');
+        // Super admin puede reasignar empresa
+        if (auth()->user()->hasRole('super_admin') && $request->filled('company_id')) {
+            $data['company_id'] = $request->company_id ?: null;
+        }
+
+        $user->update($data);
+        $user->load('roles');
 
         return response()->json([
             'success' => true,
-            'message' => 'User updated successfully',
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role->name,
-                'is_active' => $user->is_active,
-            ],
+            'message' => 'Usuario actualizado.',
+            'data'    => $this->formatUser($user),
         ], 200);
     }
 
     public function destroy(string $id)
     {
-        $user = User::find($id);
-
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found',
-            ], 404);
-        }
+        $user = $this->findUser($id);
 
         if ($user->id === auth()->id()) {
             return response()->json([
                 'success' => false,
-                'message' => 'You cannot delete your own account',
+                'message' => 'No puedes eliminar tu propia cuenta.',
+            ], 403);
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede eliminar al super administrador.',
             ], 403);
         }
 
@@ -190,7 +173,36 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'User deleted successfully',
+            'message' => 'Usuario eliminado.',
         ], 200);
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private function findUser(string $id): User
+    {
+        $authUser = auth()->user();
+        $user     = User::with('roles')->findOrFail($id);
+
+        // Admin solo puede gestionar usuarios de su empresa
+        if (! $authUser->hasRole('super_admin') && $user->company_id !== $authUser->company_id) {
+            abort(403, 'No tiene acceso a este usuario.');
+        }
+
+        return $user;
+    }
+
+    private function formatUser(User $user): array
+    {
+        return [
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'email'      => $user->email,
+            'role'       => $user->roles->first()?->name ?? '—',
+            'role_id'    => $user->role_id,
+            'company_id' => $user->company_id,
+            'is_active'  => $user->is_active,
+            'created_at' => $user->created_at,
+        ];
     }
 }

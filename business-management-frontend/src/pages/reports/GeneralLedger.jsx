@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, BookOpen, ChevronDown } from 'lucide-react';
 import LayoutNew from '../../components/layout/LayoutNew';
 import { reportsApi } from '../../api/modules/reports';
-import api from '../../api/index';
+import api from '../../api/axios';
 import { showError } from '../../utils/toast';
 
 function formatCOP(v) {

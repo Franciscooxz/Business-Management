@@ -9,23 +9,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sales', function (Blueprint $table) {
-            // Vincula la venta con una factura electrónica DIAN generada desde el POS
-            $table->unsignedBigInteger('electronic_invoice_id')
-                  ->nullable()
-                  ->after('notes');
+            if (! Schema::hasColumn('sales', 'electronic_invoice_id')) {
+                $table->unsignedBigInteger('electronic_invoice_id')
+                      ->nullable()
+                      ->after('notes');
+                $table->index('electronic_invoice_id');
+            }
 
-            // Empresa (para filtros multi-tenant en el futuro)
-            $table->unsignedBigInteger('company_id')
-                  ->nullable()
-                  ->after('id');
+            if (! Schema::hasColumn('sales', 'company_id')) {
+                $table->unsignedBigInteger('company_id')
+                      ->nullable()
+                      ->after('id');
+                $table->index('company_id');
+            }
 
-            // Tercero DIAN del comprador (para generar factura electrónica)
-            $table->unsignedBigInteger('third_party_id')
-                  ->nullable()
-                  ->after('customer_id');
-
-            $table->index('company_id');
-            $table->index('electronic_invoice_id');
+            if (! Schema::hasColumn('sales', 'third_party_id')) {
+                $table->unsignedBigInteger('third_party_id')
+                      ->nullable()
+                      ->after('customer_id');
+            }
         });
     }
 

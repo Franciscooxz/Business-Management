@@ -37,10 +37,15 @@ const InvoiceCreate      = lazy(() => import('./pages/electronic-invoice/Invoice
 const InvoiceDetail      = lazy(() => import('./pages/electronic-invoice/InvoiceDetail'));
 
 // Módulo: Contabilidad
-const PucAccounts    = lazy(() => import('./pages/accounting/PucAccounts'));
-const Vouchers       = lazy(() => import('./pages/accounting/Vouchers'));
-const VoucherCreate  = lazy(() => import('./pages/accounting/VoucherCreate'));
-const VoucherDetail  = lazy(() => import('./pages/accounting/VoucherDetail'));
+const PucAccounts        = lazy(() => import('./pages/accounting/PucAccounts'));
+const Vouchers           = lazy(() => import('./pages/accounting/Vouchers'));
+const VoucherCreate      = lazy(() => import('./pages/accounting/VoucherCreate'));
+const VoucherDetail      = lazy(() => import('./pages/accounting/VoucherDetail'));
+const AccountingPeriods  = lazy(() => import('./pages/accounting/AccountingPeriods'));
+const CostCenters        = lazy(() => import('./pages/accounting/CostCenters'));
+
+// Configuración empresa
+const CompanySettings = lazy(() => import('./pages/CompanySettings'));
 
 // Módulo: Impuestos
 const TaxConcepts        = lazy(() => import('./pages/taxes/TaxConcepts'));
@@ -72,6 +77,10 @@ const CashFlow           = lazy(() => import('./pages/treasury/CashFlow'));
 // Módulo: Administración / Auditoría
 const AuditLog = lazy(() => import('./pages/AuditLog'));
 
+// Panel de Administración (solo super_admin)
+const AdminCompanies = lazy(() => import('./pages/admin/AdminCompanies'));
+const AdminUsers     = lazy(() => import('./pages/admin/AdminUsers'));
+
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Spinner de carga entre módulos
@@ -93,6 +102,14 @@ function AdminRoute({ children }) {
   const user = useAuthStore((state) => state.user);
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (user?.role !== 'admin' && user?.role !== 'super_admin') return <Navigate to="/dashboard" replace />;
+  return children;
+}
+
+function SuperAdminRoute({ children }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (user?.role !== 'super_admin') return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -134,10 +151,12 @@ function App() {
           <Route path="/third-parties" element={<ProtectedRoute><ThirdParties /></ProtectedRoute>} />
 
           {/* Contabilidad */}
-          <Route path="/accounting/puc" element={<ProtectedRoute><PucAccounts /></ProtectedRoute>} />
-          <Route path="/accounting/vouchers" element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
-          <Route path="/accounting/vouchers/create" element={<ProtectedRoute><VoucherCreate /></ProtectedRoute>} />
-          <Route path="/accounting/vouchers/:id" element={<ProtectedRoute><VoucherDetail /></ProtectedRoute>} />
+          <Route path="/accounting/puc"             element={<ProtectedRoute><PucAccounts /></ProtectedRoute>} />
+          <Route path="/accounting/vouchers"         element={<ProtectedRoute><Vouchers /></ProtectedRoute>} />
+          <Route path="/accounting/vouchers/create"  element={<ProtectedRoute><VoucherCreate /></ProtectedRoute>} />
+          <Route path="/accounting/vouchers/:id"     element={<ProtectedRoute><VoucherDetail /></ProtectedRoute>} />
+          <Route path="/accounting/periods"          element={<ProtectedRoute><AccountingPeriods /></ProtectedRoute>} />
+          <Route path="/accounting/cost-centers"     element={<ProtectedRoute><CostCenters /></ProtectedRoute>} />
 
           {/* Inventario */}
           <Route path="/inventory" element={<ProtectedRoute><InventoryOverview /></ProtectedRoute>} />
@@ -184,8 +203,15 @@ function App() {
           <Route path="/treasury/payable"     element={<ProtectedRoute><AccountsPayable /></ProtectedRoute>} />
           <Route path="/treasury/cash-flow"   element={<ProtectedRoute><CashFlow /></ProtectedRoute>} />
 
+          {/* Configuración empresa */}
+          <Route path="/company" element={<ProtectedRoute><CompanySettings /></ProtectedRoute>} />
+
           {/* Auditoría (solo admin) */}
           <Route path="/audit-log" element={<AdminRoute><AuditLog /></AdminRoute>} />
+
+          {/* Panel Admin — solo super_admin */}
+          <Route path="/admin/companies" element={<SuperAdminRoute><AdminCompanies /></SuperAdminRoute>} />
+          <Route path="/admin/users"     element={<SuperAdminRoute><AdminUsers /></SuperAdminRoute>} />
 
           {/* Redirects */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             PermissionSeeder::class,   // Crea roles + permisos Spatie
             // RoleSeeder removido: PermissionSeeder ya maneja los roles
+            SuperAdminSeeder::class,   // Super admin del SaaS (sin empresa)
             AdminUserSeeder::class,
             CategorySeeder::class,
             // ProductSeeder removido: no existe en este proyecto

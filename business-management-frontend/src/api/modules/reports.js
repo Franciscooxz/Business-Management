@@ -1,4 +1,4 @@
-import api from '../index';
+import api from '../axios';
 
 export const reportsApi = {
   getTrialBalance:    (params) => api.get('/reports/trial-balance',    { params }),

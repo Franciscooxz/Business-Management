@@ -24,6 +24,11 @@ class EnsureCompanyContext
             return $next($request);
         }
 
+        // ── Super admin bypassa el contexto de empresa ───────────────────────
+        if ($user->hasRole('super_admin')) {
+            return $next($request);
+        }
+
         // ── Verificar que el usuario tenga empresa asignada ───────────────────
         if (! $user->company_id) {
             return response()->json([
@@ -37,9 +42,6 @@ class EnsureCompanyContext
         $requestedCompanyId = $request->header('X-Company-Id');
 
         if ($requestedCompanyId && (int) $requestedCompanyId !== (int) $user->company_id) {
-            // En el futuro aquí se validaría si el usuario tiene acceso a
-            // múltiples empresas (modelo multi-tenant avanzado).
-            // Por ahora, solo se permite la empresa del usuario.
             return response()->json([
                 'success' => false,
                 'message' => 'No tiene acceso a la empresa solicitada.',

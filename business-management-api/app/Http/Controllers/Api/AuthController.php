@@ -48,7 +48,7 @@ class AuthController extends Controller
             $user->assignRole($userRole->name);
         }
 
-        $user->load('role', 'company');
+        $user->load('role', 'company', 'roles');
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Auditoría: registro de nuevo usuario
@@ -124,7 +124,7 @@ class AuthController extends Controller
         // ── Login exitoso — limpiar contador ──────────────────────────────────
         RateLimiter::clear($throttleKey);
 
-        $user->load('role', 'company');
+        $user->load('role', 'company', 'roles');
         $token = $user->createToken('auth_token')->plainTextToken;
 
         // Auditoría: login exitoso
@@ -163,7 +163,7 @@ class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         $user = $request->user();
-        $user->load('role', 'company');
+        $user->load('role', 'company', 'roles');
 
         return response()->json([
             'success' => true,
@@ -173,11 +173,16 @@ class AuthController extends Controller
 
     private function formatUser(User $user): array
     {
+        // Priorizar el rol de Spatie (fuente de verdad para permisos)
+        // Fallback al rol legacy (role_id) para compatibilidad
+        $spatieRole = $user->getRoleNames()->first();
+        $role       = $spatieRole ?? $user->role?->name;
+
         return [
             'id'          => $user->id,
             'name'        => $user->name,
             'email'       => $user->email,
-            'role'        => $user->role?->name,
+            'role'        => $role,
             'is_active'   => $user->is_active,
             'company_id'  => $user->company_id,
             'company'     => $user->company ? [

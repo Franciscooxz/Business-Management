@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\Tax\TaxDeclarationController;
 use App\Http\Controllers\Api\Tax\WithholdingController;
 use App\Http\Controllers\Api\Reports\FinancialReportController;
 use App\Http\Controllers\Api\AuditLogController;
+use App\Http\Controllers\Api\Admin\CompanyController as AdminCompanyController;
 
 // ── Rutas públicas ──────────────────────────────────────────────────────────
 Route::post('/login', [AuthController::class, 'login']);
@@ -231,5 +232,23 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         });
 
     }); // end middleware('company')
+
+    // =========================================================================
+    // PANEL DE ADMINISTRACIÓN — Solo super_admin
+    // Gestión global del SaaS: empresas, usuarios, estadísticas
+    // =========================================================================
+    Route::middleware('role:super_admin')->prefix('admin')->group(function () {
+
+        // Estadísticas globales del SaaS
+        Route::get('stats', [AdminCompanyController::class, 'stats']);
+
+        // Gestión de empresas
+        Route::post('companies/{id}/toggle-active', [AdminCompanyController::class, 'toggleActive']);
+        Route::apiResource('companies', AdminCompanyController::class);
+
+        // Gestión global de usuarios (todos, sin scope de empresa)
+        Route::apiResource('users', UserController::class);
+
+    }); // end middleware('role:super_admin')
 
 });

@@ -86,8 +86,8 @@ return new class extends Migration
 
         if (Schema::hasTable('payroll_periods')) {
             Schema::table('payroll_periods', function (Blueprint $table) {
-                $this->addIndexIfNotExists($table, 'payroll_periods', ['company_id', 'status'],    'idx_payroll_company_status');
-                $this->addIndexIfNotExists($table, 'payroll_periods', ['company_id', 'year'],      'idx_payroll_company_year');
+                $this->addIndexIfNotExists($table, 'payroll_periods', ['company_id', 'status'],     'idx_payroll_company_status');
+                $this->addIndexIfNotExists($table, 'payroll_periods', ['company_id', 'start_date'], 'idx_payroll_company_year');
             });
         }
 
@@ -150,19 +150,21 @@ return new class extends Migration
     private function addIndexIfNotExists(Blueprint $table, string $tableName, array $columns, string $indexName): void
     {
         try {
-            $existingIndexes = collect(DB::select("SELECT indexname FROM pg_indexes WHERE tablename = ?", [$tableName]))
-                ->pluck('indexname')
+            // MySQL: SHOW INDEX FROM `table`
+            $existingIndexes = collect(DB::select("SHOW INDEX FROM `{$tableName}`"))
+                ->pluck('Key_name')
+                ->unique()
                 ->toArray();
 
             if (! in_array($indexName, $existingIndexes)) {
                 $table->index($columns, $indexName);
             }
         } catch (\Exception $e) {
-            // Fallback para SQLite (tests) — intenta agregar directamente
+            // Fallback (SQLite en tests) — intenta directo, ignorar si ya existe
             try {
                 $table->index($columns, $indexName);
             } catch (\Exception $e2) {
-                // Ya existe, ignorar
+                // Ya existe o columna no existe, ignorar
             }
         }
     }

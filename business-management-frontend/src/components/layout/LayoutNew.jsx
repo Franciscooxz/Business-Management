@@ -37,6 +37,7 @@ import {
   FileClock,
   Settings,
   ShieldCheck,
+  Crown,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import { usePermission } from '../../hooks/usePermission';
@@ -54,7 +55,7 @@ const navigationGroups = [
     label: 'Comercial',
     items: [
       { name: 'Punto de Venta', to: '/pos', icon: ShoppingCart, permission: 'invoices.create' },
-      { name: 'Facturacion Electronica', to: '/electronic-invoice/invoices', icon: Receipt, permission: 'invoices.view' },
+      { name: 'Facturacion Electronica', to: '/electronic-invoice', icon: Receipt, permission: 'invoices.view' },
       { name: 'Terceros', to: '/third-parties', icon: Users2, permission: 'third_parties.view' },
       { name: 'Ventas', to: '/sales', icon: Banknote },
       { name: 'Clientes', to: '/customers', icon: Users },
@@ -126,13 +127,27 @@ const navigationGroups = [
       { name: 'Empresa', to: '/company', icon: Building2, permission: 'company.settings' },
     ],
   },
+  {
+    label: 'Panel Adminova',
+    superAdminOnly: true,
+    items: [
+      { name: 'Empresas', to: '/admin/companies', icon: Building2, superAdminOnly: true },
+      { name: 'Todos los Usuarios', to: '/admin/users', icon: Crown, superAdminOnly: true },
+    ],
+  },
 ];
 
 function NavGroup({ group, onNavigate }) {
   const [open, setOpen] = useState(true);
   const { can, isAdmin } = usePermission();
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.role === 'super_admin';
+
+  // Grupos marcados como superAdminOnly: solo visibles para super_admin
+  if (group.superAdminOnly && !isSuperAdmin) return null;
 
   const visibleItems = group.items.filter((item) => {
+    if (item.superAdminOnly && !isSuperAdmin) return false;
     if (item.adminOnly && !isAdmin) return false;
     if (item.permission && !can(item.permission) && !isAdmin) return false;
     return true;
@@ -150,13 +165,22 @@ function NavGroup({ group, onNavigate }) {
     );
   }
 
+  const isAdminGroup = group.superAdminOnly;
+
   return (
-    <div className="mb-1">
+    <div className={`mb-1 ${isAdminGroup ? 'mt-2 pt-2 border-t border-dashed border-gray-200 dark:border-gray-700' : ''}`}>
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        className={`w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors ${
+          isAdminGroup
+            ? 'text-violet-500 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300'
+            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+        }`}
       >
-        <span>{group.label}</span>
+        <span className="flex items-center gap-1.5">
+          {isAdminGroup && <Crown className="w-3 h-3" />}
+          {group.label}
+        </span>
         {open ? (
           <ChevronDown className="w-3 h-3" />
         ) : (
