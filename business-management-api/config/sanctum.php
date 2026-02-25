@@ -47,7 +47,9 @@ return [
     |
     */
 
-    'expiration' => null,
+    // 7 días = 10080 minutos. Balance entre seguridad y comodidad para uso empresarial.
+    // Configurable por entorno: SANCTUM_EXPIRATION=10080 en .env
+    'expiration' => env('SANCTUM_EXPIRATION', 10080),
 
     /*
     |--------------------------------------------------------------------------

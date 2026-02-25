@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PayrollPeriod extends Model
 {
+    use Auditable, BelongsToCompany;
     protected $fillable = [
         'company_id', 'name', 'period_type',
         'start_date', 'end_date', 'payment_date',

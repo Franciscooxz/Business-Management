@@ -30,6 +30,7 @@ use App\Http\Controllers\Api\Tax\TaxConceptController;
 use App\Http\Controllers\Api\Tax\TaxDeclarationController;
 use App\Http\Controllers\Api\Tax\WithholdingController;
 use App\Http\Controllers\Api\Reports\FinancialReportController;
+use App\Http\Controllers\Api\AuditLogController;
 
 // ── Rutas públicas ──────────────────────────────────────────────────────────
 Route::post('/register', [AuthController::class, 'register']);
@@ -208,6 +209,12 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
             Route::post('declarations/{taxDeclaration}/present',   [TaxDeclarationController::class, 'present']);
             Route::post('declarations/{taxDeclaration}/pay',       [TaxDeclarationController::class, 'pay']);
             Route::apiResource('declarations', TaxDeclarationController::class)->except(['update', 'destroy']);
+        });
+
+        // ── AUDITORÍA (solo admin) ────────────────────────────────────────────
+        Route::middleware('role:admin')->prefix('audit-logs')->group(function () {
+            Route::get('/',        [AuditLogController::class, 'index']);
+            Route::get('/summary', [AuditLogController::class, 'summary']);
         });
 
         // ── REPORTES FINANCIEROS (throttle reducido: 20 req/min) ─────────────

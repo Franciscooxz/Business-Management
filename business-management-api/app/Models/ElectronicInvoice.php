@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ElectronicInvoice extends Model
 {
+    use Auditable, BelongsToCompany;
     const DOCUMENT_TYPES = [
         '01' => 'Factura de Venta',
         '91' => 'Nota de Crédito',

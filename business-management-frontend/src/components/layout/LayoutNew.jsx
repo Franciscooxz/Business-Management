@@ -35,6 +35,7 @@ import {
   Wallet,
   FileClock,
   Settings,
+  ShieldCheck,
 } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import { usePermission } from '../../hooks/usePermission';
@@ -119,6 +120,7 @@ const navigationGroups = [
       { name: 'Ordenes de Compra', to: '/purchase-orders', icon: ShoppingBag },
       { name: 'Monedas', to: '/currencies', icon: DollarSign, adminOnly: true },
       { name: 'Usuarios', to: '/users', icon: UserCog, adminOnly: true },
+      { name: 'Auditoria', to: '/audit-log', icon: ShieldCheck, adminOnly: true },
       { name: 'Empresa', to: '/company', icon: Building2, permission: 'company.settings' },
     ],
   },

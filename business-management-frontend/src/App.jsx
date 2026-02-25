@@ -69,6 +69,9 @@ const AccountsReceivable = lazy(() => import('./pages/treasury/AccountsReceivabl
 const AccountsPayable    = lazy(() => import('./pages/treasury/AccountsPayable'));
 const CashFlow           = lazy(() => import('./pages/treasury/CashFlow'));
 
+// Módulo: Administración / Auditoría
+const AuditLog = lazy(() => import('./pages/AuditLog'));
+
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Spinner de carga entre módulos
@@ -179,6 +182,9 @@ function App() {
           <Route path="/treasury/receivable"  element={<ProtectedRoute><AccountsReceivable /></ProtectedRoute>} />
           <Route path="/treasury/payable"     element={<ProtectedRoute><AccountsPayable /></ProtectedRoute>} />
           <Route path="/treasury/cash-flow"   element={<ProtectedRoute><CashFlow /></ProtectedRoute>} />
+
+          {/* Auditoría (solo admin) */}
+          <Route path="/audit-log" element={<AdminRoute><AuditLog /></AdminRoute>} />
 
           {/* Redirects */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

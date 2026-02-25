@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\Auditable;
 use App\Traits\BelongsToCompany;
 use App\Traits\GeneratesConsecutive;
 
 class Voucher extends Model
 {
-    use BelongsToCompany, GeneratesConsecutive;
+    use Auditable, BelongsToCompany, GeneratesConsecutive;
 
     protected $fillable = [
         'company_id',
