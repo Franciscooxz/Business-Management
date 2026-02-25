@@ -6,23 +6,38 @@ use App\Http\Controllers\Controller;
 use App\Models\PucAccount;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class PucAccountController extends Controller
 {
+    /** TTL del caché del árbol PUC: 24 horas */
+    private const TREE_CACHE_TTL = 86400;
+
+    /** Clave de caché por empresa */
+    private function treeCacheKey(): string
+    {
+        $companyId = auth()->user()?->company_id ?? 0;
+        return "puc_tree_{$companyId}";
+    }
+
+    /** Invalida el caché del árbol para la empresa actual */
+    private function flushTreeCache(): void
+    {
+        Cache::forget($this->treeCacheKey());
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     /**
-     * Retorna el arbol PUC completo.
+     * Retorna el árbol PUC completo (con caché de 24h por empresa).
      */
     public function tree(Request $request): JsonResponse
     {
-        $query = PucAccount::where('parent_id', null)
-            ->with('children.children.children.children.children')
-            ->orderBy('code');
-
+        // Búsqueda en tiempo real — sin caché para no mezclar resultados filtrados
         if ($request->filled('search')) {
-            $search = $request->search;
-            // Busqueda plana cuando hay filtro
+            $search   = $request->search;
             $accounts = PucAccount::where(function ($q) use ($search) {
-                $q->where('code', 'like', $search.'%')
+                $q->where('code', 'like', $search . '%')
                   ->orWhere('name', 'ilike', "%{$search}%");
             })
             ->where('is_active', true)
@@ -33,11 +48,22 @@ class PucAccountController extends Controller
             return response()->json(['success' => true, 'data' => $accounts, 'mode' => 'flat']);
         }
 
-        if ($request->boolean('active_only', false)) {
-            $query->where('is_active', true);
-        }
+        $activeOnly = $request->boolean('active_only', false);
 
-        $tree = $query->get();
+        // Cache solo del árbol completo (el más costoso)
+        $cacheKey = $activeOnly ? $this->treeCacheKey() . '_active' : $this->treeCacheKey();
+
+        $tree = Cache::remember($cacheKey, self::TREE_CACHE_TTL, function () use ($activeOnly) {
+            $query = PucAccount::where('parent_id', null)
+                ->with('children.children.children.children.children')
+                ->orderBy('code');
+
+            if ($activeOnly) {
+                $query->where('is_active', true);
+            }
+
+            return $query->get();
+        });
 
         return response()->json(['success' => true, 'data' => $tree, 'mode' => 'tree']);
     }
@@ -52,7 +78,7 @@ class PucAccountController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('code', 'like', $search.'%')
+                $q->where('code', 'like', $search . '%')
                   ->orWhere('name', 'ilike', "%{$search}%");
             });
         }
@@ -94,6 +120,9 @@ class PucAccountController extends Controller
 
         $account = PucAccount::create($data);
 
+        // Invalidar árbol cacheado
+        $this->flushTreeCache();
+
         return response()->json([
             'success' => true,
             'message' => 'Cuenta creada exitosamente.',
@@ -123,6 +152,9 @@ class PucAccountController extends Controller
         ]);
 
         $pucAccount->update($data);
+
+        // Invalidar árbol cacheado
+        $this->flushTreeCache();
 
         return response()->json([
             'success' => true,

@@ -13,8 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role'    => \App\Http\Middleware\RoleMiddleware::class,
+            'company' => \App\Http\Middleware\EnsureCompanyContext::class,
         ]);
+
+        // Rate limiting diferenciado por tipo de ruta
+        $middleware->throttleWithRedis();
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

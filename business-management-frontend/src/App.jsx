@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import useAuthStore from './store/authStore';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Auth (no lazy — siempre necesario)
 import Login from './pages/auth/Login';
@@ -111,6 +112,7 @@ function App() {
           error: { iconTheme: { primary: '#ef4444', secondary: '#fff' } },
         }}
       />
+      <ErrorBoundary fallbackMessage="La aplicación encontró un error. Por favor recarga la página.">
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public */}
@@ -183,6 +185,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
     </Router>
   );
 }

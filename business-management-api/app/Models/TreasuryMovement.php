@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Traits\BelongsToCompany;
 
 class TreasuryMovement extends Model
 {
-    use SoftDeletes;
+    use BelongsToCompany, SoftDeletes;
 
     const TYPES = [
         'ingreso'  => 'Ingreso',
