@@ -23,12 +23,14 @@ class RoleMiddleware
             ], 401);
         }
 
-        // Cargar la relación del rol
         $user = $request->user();
         $user->load('role');
 
-        // Verificar que el usuario tenga el rol requerido
-        if ($user->role->name !== $role) {
+        // Verifica rol legacy (role_id FK) O rol Spatie — cualquiera que coincida
+        $legacyRole  = $user->role?->name;
+        $spatieRoles = $user->getRoleNames()->toArray();
+
+        if ($legacyRole !== $role && ! in_array($role, $spatieRoles)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized. This action requires ' . $role . ' role.',

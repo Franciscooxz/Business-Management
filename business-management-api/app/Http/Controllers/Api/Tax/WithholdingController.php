@@ -16,7 +16,7 @@ class WithholdingController extends Controller
     /** GET /api/taxes/withholding */
     public function index(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $query = WithholdingEntry::with('concept', 'thirdParty')
             ->where('company_id', $companyId);
@@ -29,16 +29,24 @@ class WithholdingController extends Controller
             $query->whereHas('concept', fn ($q) => $q->where('type', $request->type));
         }
 
-        $entries = $query->orderByDesc('document_date')
+        $paginator = $query->orderByDesc('document_date')
             ->paginate($request->integer('per_page', 50));
 
-        return response()->json($entries);
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     /** POST /api/taxes/withholding */
     public function store(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $validated = $request->validate([
             'tax_concept_id'  => 'required|exists:tax_concepts,id',
@@ -62,7 +70,7 @@ class WithholdingController extends Controller
     /** PUT /api/taxes/withholding/{withholdingEntry} */
     public function update(Request $request, WithholdingEntry $withholdingEntry): JsonResponse
     {
-        abort_if($withholdingEntry->company_id !== (auth()->user()->company_id ?? 1), 403);
+        abort_if($withholdingEntry->company_id !== (auth()->user()->company_id), 403);
 
         $validated = $request->validate([
             'tax_concept_id'  => 'sometimes|exists:tax_concepts,id',
@@ -94,7 +102,7 @@ class WithholdingController extends Controller
     /** DELETE /api/taxes/withholding/{withholdingEntry} */
     public function destroy(WithholdingEntry $withholdingEntry): JsonResponse
     {
-        abort_if($withholdingEntry->company_id !== (auth()->user()->company_id ?? 1), 403);
+        abort_if($withholdingEntry->company_id !== (auth()->user()->company_id), 403);
 
         $withholdingEntry->delete();
 
@@ -107,7 +115,7 @@ class WithholdingController extends Controller
      */
     public function summary(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $validated = $request->validate([
             'start_date' => 'required|date',
@@ -132,7 +140,7 @@ class WithholdingController extends Controller
      */
     public function certificate(Request $request, int $thirdPartyId): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
         $year      = $request->integer('year', now()->year);
 
         $entries = WithholdingEntry::with('concept')
@@ -169,7 +177,7 @@ class WithholdingController extends Controller
      */
     public function exogenous(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
         $year      = $request->integer('year', now()->year);
         $type      = $request->get('type', 'retefuente');
 

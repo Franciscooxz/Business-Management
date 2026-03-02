@@ -15,12 +15,16 @@ class AccountsPayableController extends Controller
     /** GET /api/treasury/accounts-payable */
     public function index(Request $request): JsonResponse
     {
-        // Auto-actualizar vencidas
-        AccountPayable::whereIn('status', ['pendiente', 'parcial'])
+        $companyId = auth()->user()->company_id;
+
+        // Auto-actualizar vencidas (solo de esta empresa)
+        AccountPayable::where('company_id', $companyId)
+            ->whereIn('status', ['pendiente', 'parcial'])
             ->where('due_date', '<', now()->toDateString())
             ->update(['status' => 'vencido']);
 
-        $query = AccountPayable::with(['thirdParty', 'purchaseOrder'])
+        $paginator = AccountPayable::with(['thirdParty', 'purchaseOrder'])
+            ->where('company_id', $companyId)
             ->when($request->get('status'),         fn($q, $v) => $q->where('status', $v))
             ->when($request->get('third_party_id'), fn($q, $v) => $q->where('third_party_id', $v))
             ->when($request->get('date_from'),      fn($q, $v) => $q->whereDate('due_date', '>=', $v))
@@ -28,19 +32,30 @@ class AccountsPayableController extends Controller
             ->when($request->get('overdue'),        fn($q)     => $q->overdue())
             ->when($request->get('search'), function ($q, $s) {
                 $q->whereHas('thirdParty', fn($q) =>
-                    $q->where('business_name', 'like', "%{$s}%")
+                    $q->where('razon_social', 'like', "%{$s}%")
+                      ->orWhere('nombre_comercial', 'like', "%{$s}%")
                       ->orWhere('document_number', 'like', "%{$s}%")
                 );
             })
             ->orderBy('due_date')
             ->paginate($request->get('per_page', 20));
 
-        return response()->json($query);
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     /** GET /api/treasury/accounts-payable/aging */
     public function aging(): JsonResponse
     {
+        $companyId = auth()->user()->company_id;
+
         $buckets = [
             'vigente' => ['min' => null, 'max' => 0],
             '1-30'    => ['min' => 1,    'max' => 30],
@@ -53,7 +68,8 @@ class AccountsPayableController extends Controller
         $today  = now();
 
         foreach ($buckets as $label => $range) {
-            $query = AccountPayable::whereIn('status', ['pendiente', 'parcial', 'vencido']);
+            $query = AccountPayable::where('company_id', $companyId)
+                         ->whereIn('status', ['pendiente', 'parcial', 'vencido']);
             if ($range['min'] === null) {
                 $query->where('due_date', '>=', $today->toDateString());
             } elseif ($range['max'] === null) {
@@ -73,7 +89,7 @@ class AccountsPayableController extends Controller
 
         return response()->json([
             'data' => $result,
-            'total_pending' => AccountPayable::whereIn('status', ['pendiente', 'parcial', 'vencido'])->sum('pending_amount'),
+            'total_pending' => AccountPayable::where('company_id', $companyId)->whereIn('status', ['pendiente', 'parcial', 'vencido'])->sum('pending_amount'),
         ]);
     }
 
@@ -102,6 +118,7 @@ class AccountsPayableController extends Controller
             'notes'             => 'nullable|string|max:500',
         ]);
 
+        $validated['company_id']     = auth()->user()->company_id;
         $validated['pending_amount'] = $validated['total_amount'];
         $validated['paid_amount']    = 0;
 

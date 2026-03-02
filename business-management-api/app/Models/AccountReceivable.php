@@ -11,6 +11,8 @@ class AccountReceivable extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'accounts_receivable';
+
     const STATUSES = [
         'pendiente' => 'Pendiente',
         'parcial'   => 'Parcial',

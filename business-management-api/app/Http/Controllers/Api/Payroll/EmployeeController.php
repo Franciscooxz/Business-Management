@@ -15,7 +15,9 @@ class EmployeeController extends Controller
     /** GET /api/payroll/employees */
     public function index(Request $request): JsonResponse
     {
-        $query = Employee::query()
+        $companyId = auth()->user()->company_id;
+
+        $paginator = Employee::where('company_id', $companyId)
             ->when($request->get('status'),  fn($q, $v) => $q->where('status', $v))
             ->when($request->get('search'),  function ($q, $s) {
                 $q->where(function ($q) use ($s) {
@@ -28,7 +30,15 @@ class EmployeeController extends Controller
             ->orderBy('last_name')
             ->paginate($request->get('per_page', 25));
 
-        return response()->json($query);
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     /** GET /api/payroll/employees/{employee} */
@@ -71,9 +81,7 @@ class EmployeeController extends Controller
             'notes'                => 'nullable|string|max:500',
         ]);
 
-        // company_id viene del auth cuando se implementa multi-empresa;
-        // por ahora tomamos la primera empresa
-        $validated['company_id'] = auth()->user()->company_id ?? 1;
+        $validated['company_id'] = auth()->user()->company_id;
 
         $employee = Employee::create($validated);
 

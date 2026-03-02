@@ -30,7 +30,7 @@ class FinancialReportController extends Controller
             'only_with_movements' => 'boolean',
         ]);
 
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $data = $this->trialBalance->generate(
             $companyId,
@@ -50,7 +50,7 @@ class FinancialReportController extends Controller
             'period_start'  => 'required|date',
         ]);
 
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $data = $this->balanceSheet->generate(
             $companyId,
@@ -69,7 +69,7 @@ class FinancialReportController extends Controller
             'end_date'   => 'required|date|after_or_equal:start_date',
         ]);
 
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $data = $this->incomeStatement->generate(
             $companyId,
@@ -89,7 +89,7 @@ class FinancialReportController extends Controller
             'end_date'   => 'required|date|after_or_equal:start_date',
         ]);
 
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $data = $this->ledger->getLedger(
             $companyId,
@@ -111,7 +111,7 @@ class FinancialReportController extends Controller
             'search'       => 'nullable|string|max:100',
         ]);
 
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $data = $this->ledger->getJournal(
             $companyId,
@@ -132,7 +132,7 @@ class FinancialReportController extends Controller
             'end_date'   => 'required|date|after_or_equal:start_date',
         ]);
 
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $data = $this->ratios->calculate(
             $companyId,

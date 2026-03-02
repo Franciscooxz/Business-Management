@@ -1,4 +1,5 @@
 import { CalendarDays, Lock, Unlock, AlertCircle } from 'lucide-react';
+import LayoutNew from '../../components/layout/LayoutNew';
 
 const mockPeriods = [
   { id: 1, name: 'Enero 2026',    start: '2026-01-01', end: '2026-01-31', status: 'open' },
@@ -9,6 +10,7 @@ const mockPeriods = [
 
 export default function AccountingPeriods() {
   return (
+    <LayoutNew>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -72,5 +74,6 @@ export default function AccountingPeriods() {
         </table>
       </div>
     </div>
+    </LayoutNew>
   );
 }

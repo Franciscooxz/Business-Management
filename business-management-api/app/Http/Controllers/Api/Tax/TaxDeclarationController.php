@@ -20,7 +20,7 @@ class TaxDeclarationController extends Controller
     /** GET /api/taxes/declarations */
     public function index(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $query = TaxDeclaration::where('company_id', $companyId);
 
@@ -52,7 +52,7 @@ class TaxDeclarationController extends Controller
     /** POST /api/taxes/declarations */
     public function store(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $validated = $request->validate([
             'type'                  => 'required|in:iva,retefuente,reteica,ica,renta',
@@ -156,6 +156,6 @@ class TaxDeclarationController extends Controller
 
     private function authorize(TaxDeclaration $declaration): void
     {
-        abort_if($declaration->company_id !== (auth()->user()->company_id ?? 1), 403);
+        abort_if($declaration->company_id !== (auth()->user()->company_id), 403);
     }
 }

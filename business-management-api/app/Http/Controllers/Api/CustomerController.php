@@ -121,11 +121,17 @@ class CustomerController extends Controller
     public function sales(string $id)
     {
         $customer = Customer::findOrFail($id);
-        $sales = $customer->sales()->with(['items.product', 'user'])->latest()->paginate(10);
+        $paginator = $customer->sales()->with(['items.product', 'user'])->latest()->paginate(10);
 
         return response()->json([
             'success' => true,
-            'data' => $sales,
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
         ]);
     }
 }

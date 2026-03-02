@@ -38,7 +38,7 @@ class PucAccountController extends Controller
             $search   = $request->search;
             $accounts = PucAccount::where(function ($q) use ($search) {
                 $q->where('code', 'like', $search . '%')
-                  ->orWhere('name', 'ilike', "%{$search}%");
+                  ->orWhere('name', 'like', "%{$search}%");
             })
             ->where('is_active', true)
             ->orderBy('code')
@@ -79,7 +79,7 @@ class PucAccountController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('code', 'like', $search . '%')
-                  ->orWhere('name', 'ilike', "%{$search}%");
+                  ->orWhere('name', 'like', "%{$search}%");
             });
         }
 

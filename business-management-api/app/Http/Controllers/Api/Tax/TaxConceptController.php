@@ -12,7 +12,7 @@ class TaxConceptController extends Controller
     /** GET /api/taxes/concepts */
     public function index(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $query = TaxConcept::where('company_id', $companyId);
 
@@ -38,7 +38,7 @@ class TaxConceptController extends Controller
     /** POST /api/taxes/concepts */
     public function store(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $validated = $request->validate([
             'code'         => 'required|string|max:10',
@@ -91,6 +91,6 @@ class TaxConceptController extends Controller
 
     private function authorizeCompany(TaxConcept $concept): void
     {
-        abort_if($concept->company_id !== (auth()->user()->company_id ?? 1), 403);
+        abort_if($concept->company_id !== (auth()->user()->company_id), 403);
     }
 }

@@ -23,12 +23,23 @@ class PayrollPeriodController extends Controller
     /** GET /api/payroll/periods */
     public function index(Request $request): JsonResponse
     {
-        $periods = PayrollPeriod::with('createdBy:id,name')
+        $companyId = auth()->user()->company_id;
+
+        $paginator = PayrollPeriod::with('createdBy:id,name')
+            ->where('company_id', $companyId)
             ->when($request->get('status'), fn($q, $v) => $q->where('status', $v))
             ->orderByDesc('start_date')
             ->paginate($request->get('per_page', 15));
 
-        return response()->json($periods);
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     /** GET /api/payroll/periods/{period} */
@@ -51,7 +62,7 @@ class PayrollPeriodController extends Controller
             'notes'        => 'nullable|string|max:500',
         ]);
 
-        $validated['company_id'] = auth()->user()->company_id ?? 1;
+        $validated['company_id'] = auth()->user()->company_id;
         $validated['created_by'] = auth()->id();
         $validated['status']     = 'borrador';
 
@@ -151,7 +162,7 @@ class PayrollPeriodController extends Controller
      */
     public function constants(): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
         $setting   = PayrollSetting::activeForCompany($companyId);
 
         return response()->json([

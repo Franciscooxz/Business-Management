@@ -44,15 +44,26 @@ class VoucherController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('full_number', 'ilike', "%{$search}%")
-                  ->orWhere('description', 'ilike', "%{$search}%");
+                $q->where('full_number', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
         $perPage = min((int) $request->get('per_page', 20), 100);
-        $vouchers = $query->paginate($perPage);
+        $paginator = $query->paginate($perPage);
 
-        return response()->json(['success' => true, 'data' => $vouchers]);
+        return response()->json([
+            'success' => true,
+            'data'    => $paginator->items(),
+            'meta'    => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+                'from'         => $paginator->firstItem(),
+                'to'           => $paginator->lastItem(),
+            ],
+        ]);
     }
 
     public function store(Request $request): JsonResponse

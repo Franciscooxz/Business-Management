@@ -1,4 +1,5 @@
 import { Layers, AlertCircle } from 'lucide-react';
+import LayoutNew from '../../components/layout/LayoutNew';
 
 const mockCenters = [
   { id: 1, code: 'CC-001', name: 'Administración',  type: 'Gasto',    active: true },
@@ -9,6 +10,7 @@ const mockCenters = [
 
 export default function CostCenters() {
   return (
+    <LayoutNew>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -72,5 +74,6 @@ export default function CostCenters() {
         </table>
       </div>
     </div>
+    </LayoutNew>
   );
 }

@@ -187,10 +187,11 @@ class TreasuryService
      * @param  string  $from  Fecha inicio (Y-m-d)
      * @param  string  $to    Fecha fin (Y-m-d)
      */
-    public function getCashFlow(string $from, string $to): array
+    public function getCashFlow(string $from, string $to, int $companyId): array
     {
         // Movimientos reales en el período
-        $movements = TreasuryMovement::where('status', 'aplicado')
+        $movements = TreasuryMovement::where('company_id', $companyId)
+            ->where('status', 'aplicado')
             ->whereBetween('movement_date', [$from, $to])
             ->selectRaw("
                 movement_date,
@@ -202,7 +203,8 @@ class TreasuryService
             ->get();
 
         // CxC por vencer en el período (proyección de ingresos)
-        $arProjection = AccountReceivable::whereIn('status', ['pendiente', 'parcial'])
+        $arProjection = AccountReceivable::where('company_id', $companyId)
+            ->whereIn('status', ['pendiente', 'parcial'])
             ->whereBetween('due_date', [$from, $to])
             ->selectRaw("due_date as fecha, SUM(pending_amount) as monto")
             ->groupBy('due_date')
@@ -210,26 +212,28 @@ class TreasuryService
             ->get();
 
         // CxP por vencer en el período (proyección de egresos)
-        $apProjection = AccountPayable::whereIn('status', ['pendiente', 'parcial'])
+        $apProjection = AccountPayable::where('company_id', $companyId)
+            ->whereIn('status', ['pendiente', 'parcial'])
             ->whereBetween('due_date', [$from, $to])
             ->selectRaw("due_date as fecha, SUM(pending_amount) as monto")
             ->groupBy('due_date')
             ->orderBy('due_date')
             ->get();
 
-        // Saldos actuales de todas las cuentas
-        $bankBalances = BankAccount::active()
+        // Saldos actuales de cuentas de la empresa
+        $bankBalances = BankAccount::where('company_id', $companyId)
+            ->active()
             ->select('id', 'name', 'type', 'current_balance', 'currency')
             ->get();
 
         return [
-            'movements'      => $movements,
-            'ar_projection'  => $arProjection,
-            'ap_projection'  => $apProjection,
-            'bank_balances'  => $bankBalances,
-            'total_balance'  => $bankBalances->sum('current_balance'),
-            'total_ar_pending' => AccountReceivable::whereIn('status', ['pendiente', 'parcial'])->sum('pending_amount'),
-            'total_ap_pending' => AccountPayable::whereIn('status', ['pendiente', 'parcial'])->sum('pending_amount'),
+            'movements'        => $movements,
+            'ar_projection'    => $arProjection,
+            'ap_projection'    => $apProjection,
+            'bank_balances'    => $bankBalances,
+            'total_balance'    => $bankBalances->sum('current_balance'),
+            'total_ar_pending' => AccountReceivable::where('company_id', $companyId)->whereIn('status', ['pendiente', 'parcial'])->sum('pending_amount'),
+            'total_ap_pending' => AccountPayable::where('company_id', $companyId)->whereIn('status', ['pendiente', 'parcial'])->sum('pending_amount'),
         ];
     }
 

@@ -15,7 +15,10 @@ class TreasuryMovementController extends Controller
     /** GET /api/treasury/movements */
     public function index(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->company_id;
+
         $movements = TreasuryMovement::with(['bankAccount', 'thirdParty', 'destinationAccount'])
+            ->where('company_id', $companyId)
             ->when($request->get('type'),            fn($q, $v) => $q->where('type', $v))
             ->when($request->get('concept'),         fn($q, $v) => $q->where('concept', $v))
             ->when($request->get('bank_account_id'), fn($q, $v) => $q->where('bank_account_id', $v))
@@ -35,7 +38,15 @@ class TreasuryMovementController extends Controller
             ->orderBy('id', 'desc')
             ->paginate($request->get('per_page', 20));
 
-        return response()->json($movements);
+        return response()->json([
+            'data' => $movements->items(),
+            'meta' => [
+                'current_page' => $movements->currentPage(),
+                'last_page'    => $movements->lastPage(),
+                'per_page'     => $movements->perPage(),
+                'total'        => $movements->total(),
+            ],
+        ]);
     }
 
     /** GET /api/treasury/movements/{id} */
@@ -54,6 +65,7 @@ class TreasuryMovementController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $this->validateMovement($request);
+        $validated['company_id'] = auth()->user()->company_id;
 
         try {
             $movement = $this->treasury->registerMovement($validated);
@@ -90,10 +102,11 @@ class TreasuryMovementController extends Controller
     /** GET /api/treasury/cash-flow */
     public function cashFlow(Request $request): JsonResponse
     {
-        $from = $request->get('date_from', now()->startOfMonth()->toDateString());
-        $to   = $request->get('date_to',   now()->endOfMonth()->toDateString());
+        $companyId = auth()->user()->company_id;
+        $from      = $request->get('date_from', now()->startOfMonth()->toDateString());
+        $to        = $request->get('date_to',   now()->endOfMonth()->toDateString());
 
-        $data = $this->treasury->getCashFlow($from, $to);
+        $data = $this->treasury->getCashFlow($from, $to, $companyId);
         return response()->json(['data' => $data]);
     }
 

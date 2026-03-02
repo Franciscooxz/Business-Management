@@ -13,7 +13,10 @@ class BankAccountController extends Controller
     /** GET /api/treasury/bank-accounts */
     public function index(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->company_id;
+
         $accounts = BankAccount::with('pucAccount')
+            ->where('company_id', $companyId)
             ->when($request->boolean('active'), fn($q) => $q->active())
             ->when($request->get('type'), fn($q, $v) => $q->where('type', $v))
             ->orderBy('name')
@@ -53,6 +56,7 @@ class BankAccountController extends Controller
             'is_active'             => 'boolean',
         ]);
 
+        $validated['company_id']      = auth()->user()->company_id;
         $validated['current_balance'] = $validated['initial_balance'] ?? 0;
 
         $account = BankAccount::create($validated);
@@ -92,7 +96,7 @@ class BankAccountController extends Controller
     /** GET /api/treasury/bank-accounts/{id}/movements */
     public function movements(Request $request, BankAccount $bankAccount): JsonResponse
     {
-        $movements = TreasuryMovement::with('thirdParty')
+        $paginator = TreasuryMovement::with('thirdParty')
             ->where('bank_account_id', $bankAccount->id)
             ->where('status', '!=', 'anulado')
             ->when($request->get('date_from'), fn($q, $v) => $q->whereDate('movement_date', '>=', $v))
@@ -101,13 +105,22 @@ class BankAccountController extends Controller
             ->orderBy('id', 'desc')
             ->paginate($request->get('per_page', 20));
 
-        return response()->json($movements);
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     /** GET /api/treasury/bank-accounts/summary */
     public function summary(): JsonResponse
     {
-        $accounts = BankAccount::active()->get();
+        $companyId = auth()->user()->company_id;
+        $accounts  = BankAccount::where('company_id', $companyId)->active()->get();
         return response()->json([
             'data' => [
                 'accounts'      => $accounts,

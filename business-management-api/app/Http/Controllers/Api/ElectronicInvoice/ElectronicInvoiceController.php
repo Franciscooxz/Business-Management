@@ -28,7 +28,10 @@ class ElectronicInvoiceController extends Controller
     /** GET /api/electronic-invoices */
     public function index(Request $request): JsonResponse
     {
+        $companyId = auth()->user()->company_id;
+
         $query = ElectronicInvoice::with(['resolution', 'buyer'])
+            ->where('company_id', $companyId)
             ->when($request->get('status'),        fn($q, $v) => $q->where('status', $v))
             ->when($request->get('document_type'), fn($q, $v) => $q->where('document_type', $v))
             ->when($request->get('search'), function ($q, $search) {
@@ -49,11 +52,19 @@ class ElectronicInvoiceController extends Controller
         // Appends de totales para el listado
         $invoices->getCollection()->transform(function ($invoice) {
             return array_merge($invoice->toArray(), [
-                'status_label'   => ElectronicInvoice::STATUS_LABELS[$invoice->status] ?? $invoice->status,
+                'status_label' => ElectronicInvoice::STATUS_LABELS[$invoice->status] ?? $invoice->status,
             ]);
         });
 
-        return response()->json($invoices);
+        return response()->json([
+            'data' => $invoices->items(),
+            'meta' => [
+                'current_page' => $invoices->currentPage(),
+                'last_page'    => $invoices->lastPage(),
+                'per_page'     => $invoices->perPage(),
+                'total'        => $invoices->total(),
+            ],
+        ]);
     }
 
     /** GET /api/electronic-invoices/{id} */

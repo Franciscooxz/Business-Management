@@ -50,9 +50,9 @@ class AuditLogController extends Controller
         if ($request->filled('search')) {
             $s = $request->search;
             $query->where(function ($q) use ($s) {
-                $q->where('user_name', 'ilike', "%{$s}%")
-                  ->orWhere('model_label', 'ilike', "%{$s}%")
-                  ->orWhere('description', 'ilike', "%{$s}%")
+                $q->where('user_name', 'like', "%{$s}%")
+                  ->orWhere('model_label', 'like', "%{$s}%")
+                  ->orWhere('description', 'like', "%{$s}%")
                   ->orWhere('ip_address', 'like', "%{$s}%");
             });
         }
@@ -69,7 +69,13 @@ class AuditLogController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $logs,
+            'data'    => $logs->items(),
+            'meta'    => [
+                'current_page' => $logs->currentPage(),
+                'last_page'    => $logs->lastPage(),
+                'per_page'     => $logs->perPage(),
+                'total'        => $logs->total(),
+            ],
         ]);
     }
 

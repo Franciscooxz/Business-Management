@@ -13,15 +13,25 @@ class DianResolutionController extends Controller
     /** GET /api/dian/resolutions */
     public function index(Request $request): JsonResponse
     {
-        $query = DianResolution::query()
+        $companyId = auth()->user()->company_id;
+
+        $query = DianResolution::where('company_id', $companyId)
             ->when($request->get('type'), fn($q, $v) => $q->where('type', $v))
             ->when($request->boolean('active'), fn($q) => $q->active())
             ->orderBy('is_active', 'desc')
             ->orderBy('created_at', 'desc');
 
-        $resolutions = $query->paginate($request->get('per_page', 15));
+        $paginator = $query->paginate($request->get('per_page', 15));
 
-        return response()->json($resolutions);
+        return response()->json([
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ]);
     }
 
     /** GET /api/dian/resolutions/{id} */
@@ -54,12 +64,17 @@ class DianResolutionController extends Controller
             'is_active'         => 'boolean',
         ]);
 
-        // Si se marca como activa, desactivar las demás del mismo tipo
+        $companyId = auth()->user()->company_id;
+
+        // Si se marca como activa, desactivar las demás del mismo tipo (solo de esta empresa)
         if ($validated['is_active'] ?? false) {
-            DianResolution::where('type', $validated['type'])->update(['is_active' => false]);
+            DianResolution::where('company_id', $companyId)
+                ->where('type', $validated['type'])
+                ->update(['is_active' => false]);
         }
 
         $resolution = DianResolution::create(array_merge($validated, [
+            'company_id'     => $companyId,
             'current_number' => $validated['from_number'] - 1,
         ]));
 
@@ -84,10 +99,11 @@ class DianResolutionController extends Controller
             'is_active'         => 'boolean',
         ]);
 
-        // Si se activa esta, desactivar las otras del mismo tipo
+        // Si se activa esta, desactivar las otras del mismo tipo (solo de esta empresa)
         if (($validated['is_active'] ?? null) === true) {
             $type = $validated['type'] ?? $resolution->type;
-            DianResolution::where('type', $type)
+            DianResolution::where('company_id', $resolution->company_id)
+                ->where('type', $type)
                 ->where('id', '!=', $resolution->id)
                 ->update(['is_active' => false]);
         }
@@ -114,7 +130,9 @@ class DianResolutionController extends Controller
     /** POST /api/dian/resolutions/{id}/activate */
     public function activate(DianResolution $resolution): JsonResponse
     {
-        DianResolution::where('type', $resolution->type)->update(['is_active' => false]);
+        DianResolution::where('company_id', $resolution->company_id)
+            ->where('type', $resolution->type)
+            ->update(['is_active' => false]);
         $resolution->update(['is_active' => true]);
         return response()->json(['data' => $resolution->fresh(), 'message' => 'Resolución activada.']);
     }

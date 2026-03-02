@@ -18,9 +18,9 @@ class ThirdPartyController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('document_number', 'like', "%{$search}%")
-                  ->orWhere('razon_social', 'ilike', "%{$search}%")
-                  ->orWhere('nombre_comercial', 'ilike', "%{$search}%")
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) ilike ?", ["%{$search}%"]);
+                  ->orWhere('razon_social', 'like', "%{$search}%")
+                  ->orWhere('nombre_comercial', 'like', "%{$search}%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", ["%{$search}%"]);
             });
         }
 
@@ -44,11 +44,19 @@ class ThirdPartyController extends Controller
         }
 
         $perPage = min((int) $request->get('per_page', 20), 100);
-        $third_parties = $query->orderBy('razon_social')->orderBy('last_name')->paginate($perPage);
+        $paginator = $query->orderBy('razon_social')->orderBy('last_name')->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'data'    => $third_parties,
+            'data'    => $paginator->items(),
+            'meta'    => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+                'from'         => $paginator->firstItem(),
+                'to'           => $paginator->lastItem(),
+            ],
         ]);
     }
 
@@ -167,9 +175,9 @@ class ThirdPartyController extends Controller
         $results = ThirdParty::where('is_active', true)
             ->where(function ($query) use ($q) {
                 $query->where('document_number', 'like', "%{$q}%")
-                      ->orWhere('razon_social', 'ilike', "%{$q}%")
-                      ->orWhere('nombre_comercial', 'ilike', "%{$q}%")
-                      ->orWhereRaw("CONCAT(first_name, ' ', last_name) ilike ?", ["%{$q}%"]);
+                      ->orWhere('razon_social', 'like', "%{$q}%")
+                      ->orWhere('nombre_comercial', 'like', "%{$q}%")
+                      ->orWhereRaw("CONCAT(first_name, ' ', last_name) like ?", ["%{$q}%"]);
             })
             ->limit(15)
             ->get(['id', 'document_type', 'document_number', 'dv', 'razon_social', 'first_name', 'last_name', 'persona_type', 'email', 'email_fe']);

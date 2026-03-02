@@ -13,7 +13,7 @@ class PayrollSettingController extends Controller
     /** GET /api/payroll/settings */
     public function index(): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $settings = PayrollSetting::where('company_id', $companyId)
             ->orderByDesc('year')
@@ -25,7 +25,7 @@ class PayrollSettingController extends Controller
     /** POST /api/payroll/settings */
     public function store(Request $request): JsonResponse
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
 
         $validated = $request->validate([
             'year'                => 'required|integer|min:2020|max:2099',
@@ -109,7 +109,7 @@ class PayrollSettingController extends Controller
 
     private function authorizeCompany(PayrollSetting $setting): void
     {
-        $companyId = auth()->user()->company_id ?? 1;
+        $companyId = auth()->user()->company_id;
         abort_if($setting->company_id !== $companyId, 403);
     }
 }

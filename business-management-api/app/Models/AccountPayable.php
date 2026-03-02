@@ -11,6 +11,8 @@ class AccountPayable extends Model
 {
     use SoftDeletes;
 
+    protected $table = 'accounts_payable';
+
     const STATUSES = [
         'pendiente' => 'Pendiente',
         'parcial'   => 'Parcial',

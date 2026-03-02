@@ -1,4 +1,5 @@
 import { Building2, MapPin, Phone, Mail, FileText, AlertCircle } from 'lucide-react';
+import LayoutNew from '../components/layout/LayoutNew';
 import useAuthStore from '../store/authStore';
 
 export default function CompanySettings() {
@@ -6,6 +7,7 @@ export default function CompanySettings() {
   const company = user?.company;
 
   return (
+    <LayoutNew>
     <div className="space-y-6">
       {/* Header */}
       <div>
@@ -56,6 +58,7 @@ export default function CompanySettings() {
         </div>
       )}
     </div>
+    </LayoutNew>
   );
 }
 
